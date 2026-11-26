@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadApprovedAttributes",
+      "Effect": "Allow",
+      "Action": ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"],
+      "Resource": "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/NovaUsersTP2A",
+      "Condition": {
+        "ForAllValues:StringEquals": {
+          "dynamodb:Attributes": ["id", "username", "email"]
+        },
+        "StringEqualsIfExists": {"dynamodb:Select": "SPECIFIC_ATTRIBUTES"},
+        "Null": {"dynamodb:Attributes": "false"}
+      }
+    }
+  ]
+}
