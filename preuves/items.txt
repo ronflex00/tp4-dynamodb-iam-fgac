@@ -1,0 +1,1 @@
+2026-11-26T10:00:39.016753+00:00 Scan et GetItem admin rc=0 : exactement les items fictifs 001 et 002 ; cinq attributs String chacun, valeurs conformes.

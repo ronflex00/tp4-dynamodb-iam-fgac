@@ -2,12 +2,12 @@
 
 Les `.txt` produits ici contiennent des résultats réellement observés par AWS CLI et expurgés. Les suites ajoutent `I01.txt`, `A01.txt`… et `B01.txt`… seulement après un appel réel, ainsi que leurs JSON de résultats. Les contrôles locaux sont identifiés séparément ; ils ne prouvent aucun droit AWS.
 
-Les captures suivantes sont attendues et **ne doivent être créées qu'à partir d'une vraie capture écran**. Aucun PNG n'a été fabriqué ni reconstitué à partir d'un résultat supposé. Aucun outil de capture de navigateur n'est disponible dans cette session ; les journaux sûrs ne sont pas présentés comme des captures.
+Les captures suivantes **proviennent ou proviendront de vrais écrans**. Les deux premières ont été prises avec grim sur les seules fenêtres de terminal foot affichant de nouvelles réponses AWS réelles. Elles ont été revues visuellement avant copie dans preuves/. Le compte, le principal et l'ARN n'apparaissent pas dans l'affichage ; les items affichés sont exclusivement fictifs. Voir [la traçabilité des captures](captures-admin.txt). Aucun écran de clé n'est capturé.
 
 | Fichier demandé | Contenu à capturer | État |
 | --- | --- | --- |
-| 01-table-created.png | Table ACTIVE et schéma | À FAIRE |
-| 02-items.png | Deux items fictifs | À FAIRE |
+| 01-table-created.png | Table ACTIVE et schéma | CAPTURE RÉELLE REVUE |
+| 02-items.png | Deux items fictifs | CAPTURE RÉELLE REVUE |
 | 03-reader-no-permission.png | Refus initial réel | À FAIRE |
 | 04-projection-allowed.png | A01 | À FAIRE |
 | 05-ssn-denied.png | A02 | À FAIRE |

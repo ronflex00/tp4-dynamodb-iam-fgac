@@ -4,6 +4,11 @@ Résultats AWS uniquement. `NOT TESTED` signifie aucune observation. Les tests l
 
 | Étape | Identité | Action | Clé | Projection | Attendu | Observé | Statut | Preuve |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| D01 | tp2a-admin | DescribeTable + options | — | métadonnées | ACTIVE, schéma et options conformes | rc=0, ACTIVE, id String, On-demand, Standard | PASS | [Preuve](../preuves/01-table-created.png) |
+| D02 | tp2a-admin | GetItem consistent-read | 001 | complète | item fictif exact, cinq String | rc=0, valeurs exactes vérifiées | PASS | [Preuve](../preuves/02-items.png) |
+| D03 | tp2a-admin | GetItem consistent-read | 002 | complète | item fictif exact, cinq String | rc=0, valeurs exactes vérifiées | PASS | [Preuve](../preuves/02-items.png) |
+| D04 | tp2a-admin | GetUser + listes IAM initiales | — | métadonnées | lecteur sans groupe, policy ni clé initiale | rc=0, UserId conforme et listes vides à la création | PASS | [Preuve](../preuves/reader-created.txt) |
+| D05 | tp2a-admin | GetLoginProfile | — | métadonnées | NoSuchEntity pour confirmer absence de login | rc=254, AccessDenied explicite par SCP | PARTIAL | [Preuve](../preuves/audit-login-profile.txt) |
 | I01 (initial) | tp2a-reader | get-item | 001 | allowed | AccessDenied | Non exécuté | NOT TESTED | — |
 | A01 (attributes) | tp2a-reader | get-item | 001 | allowed | SUCCESS | Non exécuté | NOT TESTED | — |
 | A02 (attributes) | tp2a-reader | get-item | 001 | ssn | AccessDenied | Non exécuté | NOT TESTED | — |

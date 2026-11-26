@@ -49,3 +49,22 @@ CONTRÔLES LOCAUX OK — Markdown analysé, liens, JSON, Bash/Fish, exclusions e
 
 Commande : git diff --check
 Code réel : 0
+
+Exécution AWS jusqu’à la clé manuelle — 2026-11-26T10:07:03.078678+00:00
+Tests unitaires relancés après traitement précis du Deny SCP : 18 tests réussis, code 0. Tests hors ligne ; aucun résultat reader déduit.
+Deux captures réelles ont été revues visuellement : table et items.
+
+Commande : python3 scripts/validate-policies.py --templates
+Code réel : 0
+VALIDATION LOCALE OK — modèles non déployables
+
+Commande : python3 scripts/validate-policies.py
+Code réel : 0
+VALIDATION LOCALE OK — ARN lié
+
+Commande : python3 scripts/validate-project.py
+Code réel : 0
+CONTRÔLES LOCAUX OK — Markdown analysé, liens, JSON, Bash/Fish, exclusions et 44 fichiers suivables audités. Les images exigent une revue visuelle. Aucun test AWS effectué par ce contrôle.
+
+Commande : git diff --check
+Code réel : 0

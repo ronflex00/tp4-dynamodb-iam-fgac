@@ -1,0 +1,4 @@
+2026-11-26T09:59:59.697325+00:00 STS compte/principal conformes au manifest. Table confirmée par l’utilisateur, créée après absence observée au préflight.
+DescribeTable rc=0 : ACTIVE, id String, Standard, On-demand, sans index, Stream ni réplication.
+PITR désactivé ; aucune sauvegarde supplémentaire ; GetResourcePolicy : PolicyNotFoundException.
+TagResource rc=0, puis marqueur TP4LabId observé sur le seul ARN exact du laboratoire. Aucun droit ajouté.

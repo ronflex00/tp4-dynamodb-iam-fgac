@@ -2,7 +2,7 @@
 
 Module : Gouvernance des identités et des habilitations. Entreprise du cas : Nova Services. Formateur indiqué : Mohammad Jabbari. Préparation : 26 novembre 2026, Europe/Paris.
 
-**État : PARTIAL.** Le PDF officiel de dix pages a été lu et rapproché des préparatifs. STS, la région et l'absence initiale des ressources ont été revérifiés. Après une déclaration utilisateur de table ACTIVE, les lectures AWS CLI constatent pourtant zéro table dans le compte vérifié en eu-north-1. Cet écart doit être résolu avant toute écriture. Aucun test reader ni capture de ces tests n'a été réalisé.
+**État : PARTIAL — clé technique manuelle en attente.** Le PDF de dix pages a été lu. La table créée par l'utilisateur est maintenant vérifiée ACTIVE en eu-north-1 ; les deux items fictifs ont été insérés puis contrôlés et le lecteur sans permission a été créé. Deux captures réelles sont conservées. Les tests reader n'ont pas commencé. Le contrôle de métadonnées GetLoginProfile reste PARTIAL à cause d'un Deny explicite dans une SCP, sans contournement de cette restriction.
 
 ## 1. Contexte
 
@@ -30,15 +30,21 @@ Nom visé : NovaUsersTP2A ; clé `id` String, aucune sort key, Standard, On-dema
 
 Observation préalable : DescribeTable a renvoyé ResourceNotFoundException, rc=254 ; la table était absente lors de la préparation. Le préflight a renouvelé ce constat après lecture du PDF et conservé l'appartenance dans le manifest privé. Voir [preuve du préflight](preuves/preflight.txt).
 
-L'utilisateur a ensuite annoncé la création console avec état ACTIVE et autorisé les opérations automatiques admin, dont l'insertion des items. Deux DescribeTable du profil vérifié répondent cependant ResourceNotFoundException (rc=254) et ListTables retourne zéro table (rc=0). La déclaration console et l'observation CLI restent distinctes. Ni table ni item n'ont été créés par l'agent ; aucune recréation n'a été tentée. Voir [diagnostic réel](preuves/table-recheck.txt). Compte, région et nom doivent être rapprochés avant reprise.
+Lors de la première reprise, DescribeTable répondait ResourceNotFoundException et ListTables était vide : [diagnostic historique](preuves/table-recheck.txt). L'utilisateur a ensuite identifié la cause : la table n'avait pas encore été créée. Après sa création réelle en console, DescribeTable a répondu rc=0 et ACTIVE. L'ARN correspond au compte du manifest et la date de création est postérieure au constat d'absence. Le tag TP4LabId a été ajouté seulement après ces vérifications ; TableId est enregistré. Standard, On-demand, id String, absence d'index, Stream, réplication, PITR, sauvegarde supplémentaire et resource policy ont été contrôlés. Voir [appartenance](preuves/table-ownership.txt) et [capture ACTIVE](preuves/01-table-created.png).
+
+L'insertion CLI automatique a été expressément autorisée par l'utilisateur, en variante de la création console du PDF. PutItem conditionnel n'a pas écrasé de données. Scan administrateur puis GetItem consistent-read 001/002 confirment exactement deux items et les cinq valeurs String attendues. Voir [journal](preuves/items.txt) et [capture réelle des deux lectures](preuves/02-items.png).
 
 ## 6. Identité IAM
 
-Nom visé : tp2a-dynamo-reader, aucun groupe, login console ou permission initiale. Une seule clé de laboratoire à créer manuellement puis configurer dans un terminal personnel ; aucun secret ne sera transmis à Codex. Observation préalable : GetUser a renvoyé NoSuchEntity, rc=254. Utilisateur non créé. Les tags, TableId et UserId sont des garde-fous techniques complémentaires pour limiter les opérations au TP4.
+`tp2a-dynamo-reader` a été créé par CreateUser après un nouveau constat NoSuchEntity. Son UserId et son tag sont conformes au manifest. Les listes de groupes, policies inline et managed policies sont vides (rc=0), sans permissions boundary. ListAccessKeys retournait zéro clé avant l'intervention humaine. Aucune policy de lecture n'est encore posée. Voir [preuve de création et audit](preuves/reader-created.txt).
+
+Aucun login console ni mot de passe n'a été créé par nos commandes. En revanche, le rôle admin rencontre un **Deny explicite dans une SCP sur iam:GetLoginProfile**, rc=254. L'absence de profil console ne peut donc pas être confirmée par cette API : contrôle PARTIAL, [réponse expurgée](preuves/audit-login-profile.txt). Cette restriction n'a pas été changée et aucun droit supplémentaire n'a été accordé. Elle concerne l'audit administrateur, pas le refus implicite DynamoDB du reader.
+
+Le profil local tp2a-reader est préparé avec région eu-north-1 et sortie JSON ; les fichiers de profil ont les permissions 600. La création de l'unique clé et sa saisie restent exclusivement humaines dans la console puis le terminal personnel. [Procédure prête à exécuter](docs/configuration-reader.md).
 
 ## 7. Refus initial
 
-Protocole I01 : GetItem 001 avec projection approuvée, profil reader sans permission. Attendu : AccessDenied. Observé : NOT TESTED, car utilisateur et clé n'existent pas encore. Un GetCallerIdentity réussi ne permet pas de conclure sur les permissions DynamoDB.
+Protocole I01 : GetItem 001 avec projection approuvée, profil reader sans permission. Attendu : AccessDenied. Observé : NOT TESTED, car la configuration de la clé reader n'est pas encore confirmée. L'utilisateur existe désormais sans permission. Un GetCallerIdentity réussi ne permet pas de conclure sur les permissions DynamoDB ; le refus GetLoginProfile de l'administrateur ne valide pas non plus ce scénario.
 
 ## 8. Policy Attributes
 
@@ -72,11 +78,11 @@ UpdateItem et DeleteItem sont aussi testés avec une condition fausse sur l'item
 
 ## 15. Restriction au dossier 001
 
-La policy B remplace la policy inline A sous le même nom TP2AFGAC. L'audit exige l'absence d'autres inline/managed policies, groupes, login console et resource policy de table. Les tests B01/B05 doivent réussir ; B02/B06 doivent refuser 002. Attendre la propagation IAM avant les retests. Observé : NOT TESTED.
+La policy B remplacera la policy inline A sous le même nom TP2AFGAC. L'audit vérifie l'absence d'autres inline/managed policies, groupes et resource policy de table. GetLoginProfile conserve un statut PARTIAL documenté si la SCP observée le refuse ; les autres erreurs d'audit arrêtent le script. Les tests B01/B05 doivent réussir ; B02/B06 doivent refuser 002. Attendre la propagation IAM avant les retests. Observé : NOT TESTED.
 
 ## 16. Matrice
 
-[Matrice complète](docs/tests.md) avec attendu, observé, statut et preuve. Les suites la régénèrent à partir des appels effectivement exécutés. Tous les scénarios reader sont NOT TESTED. PASS et EXPECTED DENY ne seront utilisés qu'après observation conforme. Les résultats des tests unitaires locaux ne remplissent pas cette matrice.
+[Matrice complète](docs/tests.md) avec attendu, observé, statut et preuve. Les contrôles administrateur D01–D04 ont des observations conformes ; D05 GetLoginProfile reste PARTIAL. Tous les scénarios reader sont NOT TESTED. Les suites les rempliront uniquement après les appels réels. Les résultats des tests unitaires locaux ne remplissent pas cette matrice.
 
 ## 17. Analyse gouvernance
 
@@ -97,10 +103,10 @@ Aucune validation formelle, personne responsable ou date de revue n'a été inve
 
 ## 18. Nettoyage
 
-**NON LANCÉ — autorisation CLEANUP non reçue.** Le [protocole](docs/cleanup.md) est préparé. Le compte, Builder ID, MFA et ressources extérieures seront préservés. Aucune ressource TP4 n'a été créée à ce stade ; leur absence préalable n'est pas une preuve de nettoyage final.
+**NON LANCÉ — autorisation CLEANUP non reçue.** Le [protocole](docs/cleanup.md) est préparé. La table avec ses deux items et l'utilisateur lecteur sont conservés dans AWS. Le compte, Builder ID, MFA et ressources extérieures sont préservés. Aucun logout ou retrait de secrets n'est exécuté pendant cette attente de configuration.
 
 ## 19. Conclusion
 
-Le PDF a été lu et les préparatifs rapprochés du sujet ; les huit réponses correspondent à la page 10. L'identité non-root et la région sont vérifiées ; les policies privées sont liées à l'ARN réel et validées localement. La table annoncée ACTIVE n'est pas retrouvée par CLI dans ce compte/région. Il faut résoudre cet écart avant l'insertion automatique autorisée par l'utilisateur, puis créer le reader et attendre sa clé manuelle. Aucun test FGAC n'est déclaré réussi, aucune capture fictive créée et aucun nettoyage exécuté. Statut du TP : **PARTIAL**.
+Le PDF et les huit questions sont vérifiés. La table ACTIVE, les items 001/002 exacts et le lecteur sans permission sont désormais observés dans AWS. Les policies privées avec ARN exact sont prêtes ; les tests reader attendent l'unique clé manuelle. Deux captures réelles et les journaux sont conservés. La limite SCP sur GetLoginProfile est explicitement PARTIAL et n'a pas été contournée. Aucun test FGAC reader n'est déclaré réussi ; aucun nettoyage ni publication effectué. Statut du TP : **PARTIAL**.
 
-Validation locale observée : deux modèles JSON conformes au validateur structurel, quinze tests unitaires réussis, syntaxe Bash/Fish et environnements sourcés vérifiés, Markdown analysé et liens locaux contrôlés, audit des fichiers suivables sans secret détecté. Les fichiers de profil ont les permissions 600, les répertoires privés 700. Voir le [journal de validation locale](preuves/local-validation.txt). Les commits sont locaux, sans publication.
+Validation locale : modèles et JSON privés validés ; dix-huit tests unitaires réussis, dont trois contrôles du traitement explicite de l'audit SCP partiel. Syntaxe Bash/Fish, Markdown et secrets sont contrôlés avant commit. Les fichiers de profil ont les permissions 600, les répertoires privés 700. Voir le [journal de validation locale](preuves/local-validation.txt). Les commits restent locaux.

@@ -1,0 +1,4 @@
+2026-11-26T10:04:40.790780+00:00 Captures réelles des fenêtres dédiées foot, sous Hyprland, avec grim limité au rectangle client.
+01-table-created.png : nouvelle réponse DescribeTable réelle ; compte, ARN et TableId exclus de l’affichage.
+02-items.png : deux nouvelles réponses GetItem réelles et exactes ; uniquement les données fictives du TP.
+Images revues visuellement avant copie dans preuves/. Aucun écran de clé ni capture globale du bureau.

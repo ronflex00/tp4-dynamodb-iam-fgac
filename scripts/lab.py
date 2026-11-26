@@ -175,6 +175,25 @@ def table(manifest):
     return value
 
 
+def audit_login_profile(manifest):
+    result = aws("tp2a-admin", "iam", "get-login-profile", "--user-name", READER)
+    if result.returncode != 0 and error_code(result) == "NoSuchEntity":
+        return "ABSENT"
+    restricted = (result.returncode != 0 and error_code(result) == "AccessDenied"
+                  and "iam:GetLoginProfile" in result.stderr
+                  and "explicit deny in a service control policy" in result.stderr)
+    require(restricted, "Profil console présent ou absence non démontrée ; inspecter la réponse AWS")
+    # La restriction de lecture n'est ni contournée ni comptée comme un refus reader.
+    manifest.setdefault("audit_limitations", {})["get-login-profile"] = {
+        "observed_at": now(), "returncode": result.returncode,
+        "status": "PARTIAL", "cause": "Explicit deny in a service control policy",
+    }
+    save(manifest)
+    proof("audit-login-profile.txt", f"{now()} Profil administrateur, action iam:GetLoginProfile.\nCode réel : {result.returncode}. Statut d'audit : PARTIAL.\n{result.stderr}\nAucun accès console créé par nos commandes CreateUser. Absence non confirmée par cette API.\nAucune restriction AWS modifiée. Ce résultat ne valide aucun test DynamoDB du reader.\n")
+    print("Audit GetLoginProfile : PARTIAL — lecture refusée par une SCP ; restriction conservée.")
+    return "UNVERIFIED_SCP_DENY"
+
+
 def reader(manifest, phase=None, require_key=True):
     value = admin("iam", "get-user", "--user-name", READER)["User"]
     require(value["UserId"] == manifest.get("user_id"), "Utilisateur non enregistré ou remplacé")
@@ -189,7 +208,7 @@ def reader(manifest, phase=None, require_key=True):
     if phase:
         document = admin("iam", "get-user-policy", "--user-name", READER, "--policy-name", POLICY)["PolicyDocument"]
         validation.validate(document, phase, manifest["table_arn"])
-    absent("iam", "get-login-profile", "NoSuchEntity", "--user-name", READER)
+    audit_login_profile(manifest)
     keys = admin("iam", "list-access-keys", "--user-name", READER)["AccessKeyMetadata"]
     require(len(keys) <= 1, "Plus d'une clé de laboratoire : arrêt")
     if require_key:
@@ -330,6 +349,12 @@ def matrix():
             records.update({r["id"]: r for r in json.loads(path.read_text())})
     text = "# Matrice des tests\n\nRésultats AWS uniquement. `NOT TESTED` signifie aucune observation. Les tests locaux ne valident pas IAM.\n\n"
     text += "| Étape | Identité | Action | Clé | Projection | Attendu | Observé | Statut | Preuve |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
+    admin_results = PROOFS / "results-admin.json"
+    if admin_results.exists():
+        for result in json.loads(admin_results.read_text()):
+            fields = [result[key] for key in ("step", "identity", "action", "key", "projection", "expected", "observed", "status")]
+            fields.append(f"[Preuve](../preuves/{result['proof']})")
+            text += "| " + " | ".join(fields) + " |\n"
     for phase in ("initial", "attributes", "leadingkeys"):
         for ident, action, key, projection, allow in definitions(phase):
             record = records.get(ident, {})
@@ -466,7 +491,9 @@ def create_reader():
                   f"Key=TP4LabId,Value={manifest['lab_id']}")["User"]
     manifest["user_id"] = value["UserId"]
     save(manifest)
-    reader(manifest, require_key=False)
+    keys = reader(manifest, require_key=False)
+    require(not keys, "Clé inattendue après création : inspecter avant configuration")
+    proof("reader-created.txt", f"{now()} CreateUser rc=0 : {READER}.\nGetUser : UserId et tag d'appartenance conformes au manifest.\nListGroupsForUser, ListAttachedUserPolicies, ListUserPolicies : listes vides ; aucune permissions boundary.\nAucun accès console créé ; état GetLoginProfile : {'PARTIAL (SCP)' if manifest.get('audit_limitations', {}).get('get-login-profile') else 'absence observée'}.\nListAccessKeys : liste vide ; aucune clé créée par l'agent.\nProfil lecteur à configurer manuellement avant tout test DynamoDB.\n")
     print("Utilisateur créé sans permission ni accès console. MANUAL READER KEY REQUIRED : voir README.")
 
 
@@ -488,7 +515,7 @@ def apply_policy(phase):
     manifest["policy_applied_at"] = now()
     save(manifest)
     reader(manifest, phase)
-    proof(f"policy-{phase}.txt", f"{now()} PutUserPolicy rc=0 ; TP2AFGAC remplacée.\nGetUserPolicy conforme ; aucun groupe, managed policy, autre policy inline, accès console ou policy de ressource. ARN exact vérifié, masqué dans le dépôt.\n")
+    proof(f"policy-{phase}.txt", f"{now()} PutUserPolicy rc=0 ; TP2AFGAC remplacée.\nGetUserPolicy conforme ; aucun groupe, managed policy, autre policy inline ou policy de ressource.\nAucun accès console créé par nos opérations ; vérification GetLoginProfile : {'PARTIAL (SCP)' if manifest.get('audit_limitations', {}).get('get-login-profile') else 'absence observée'}.\nARN exact vérifié, masqué dans le dépôt.\n")
     print("Policy relue et vérifiée. Attendre la propagation IAM (par exemple 30 secondes), puis lancer les tests ; aucun PASS anticipé.")
 
 

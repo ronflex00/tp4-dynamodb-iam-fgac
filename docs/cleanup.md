@@ -10,6 +10,8 @@ bash scripts/cleanup-check.sh
 
 Ce contrôle exige le manifest privé, le même compte, le même principal admin, la même région, les marqueurs du laboratoire, les TableId/UserId attendus, la table ACTIVE, les deux items conformes, la policy B et toutes les suites observées. Il n'exécute aucune suppression et ne vaut pas autorisation.
 
+L'audit GetLoginProfile conserve sa limite PARTIAL lorsqu'une SCP refuse explicitement cette lecture ; ce refus ne vaut pas preuve d'absence d'un accès console. Cette limite doit figurer dans le rapport, même si les tests DynamoDB ont ensuite tous été observés conformes.
+
 ## Exécution après autorisation uniquement
 
 ```bash

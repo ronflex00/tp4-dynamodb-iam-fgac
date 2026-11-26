@@ -1,0 +1,57 @@
+[
+  {
+    "step": "D01",
+    "identity": "tp2a-admin",
+    "action": "DescribeTable + options",
+    "key": "—",
+    "projection": "métadonnées",
+    "expected": "ACTIVE, schéma et options conformes",
+    "observed": "rc=0, ACTIVE, id String, On-demand, Standard",
+    "status": "PASS",
+    "proof": "01-table-created.png"
+  },
+  {
+    "step": "D02",
+    "identity": "tp2a-admin",
+    "action": "GetItem consistent-read",
+    "key": "001",
+    "projection": "complète",
+    "expected": "item fictif exact, cinq String",
+    "observed": "rc=0, valeurs exactes vérifiées",
+    "status": "PASS",
+    "proof": "02-items.png"
+  },
+  {
+    "step": "D03",
+    "identity": "tp2a-admin",
+    "action": "GetItem consistent-read",
+    "key": "002",
+    "projection": "complète",
+    "expected": "item fictif exact, cinq String",
+    "observed": "rc=0, valeurs exactes vérifiées",
+    "status": "PASS",
+    "proof": "02-items.png"
+  },
+  {
+    "step": "D04",
+    "identity": "tp2a-admin",
+    "action": "GetUser + listes IAM initiales",
+    "key": "—",
+    "projection": "métadonnées",
+    "expected": "lecteur sans groupe, policy ni clé initiale",
+    "observed": "rc=0, UserId conforme et listes vides à la création",
+    "status": "PASS",
+    "proof": "reader-created.txt"
+  },
+  {
+    "step": "D05",
+    "identity": "tp2a-admin",
+    "action": "GetLoginProfile",
+    "key": "—",
+    "projection": "métadonnées",
+    "expected": "NoSuchEntity pour confirmer absence de login",
+    "observed": "rc=254, AccessDenied explicite par SCP",
+    "status": "PARTIAL",
+    "proof": "audit-login-profile.txt"
+  }
+]

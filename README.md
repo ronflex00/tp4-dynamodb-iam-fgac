@@ -2,7 +2,7 @@
 
 Nova Services · Gouvernance des identités et des habilitations · Formateur indiqué : Mohammad Jabbari.
 
-**État : PARTIAL — PDF lu, identité AWS revérifiée, écart console/CLI à résoudre.** L'utilisateur indique la table ACTIVE, mais deux lectures DescribeTable répondent ResourceNotFoundException et ListTables retourne zéro table dans le compte du profil isolé en eu-north-1. Aucun item ni utilisateur n'a été créé par l'agent ; aucun test reader ni nettoyage lancé.
+**État : PARTIAL — table ACTIVE, items vérifiés, lecteur créé ; clé technique manuelle en attente.** Le profil administrateur isolé confirme la table en eu-north-1 et les deux items exacts. Le lecteur ne possède aucune policy ni groupe ; zéro clé était présent à sa création. Deux captures réelles sont conservées. Les tests reader attendent ses credentials ; aucun nettoyage ni publication n'a été lancé. L'audit GetLoginProfile est PARTIAL car une SCP refuse cette lecture de métadonnées.
 
 ## Source et périmètre
 
@@ -35,26 +35,28 @@ Paramètres confirmés par l'utilisateur le 26 novembre 2026 à partir du TP3 : 
 
 Le profil admin utilise `aws login` avec des identifiants temporaires, aucune clé admin permanente. Région et sortie JSON ont été configurées dans le seul fichier isolé. Après expiration, Codex peut relancer `aws login --profile tp2a-admin` dans cet environnement et attendre l'intervention navigateur ; ne pas partager l'URL d'autorisation ni son code. STS refuse root dans les scripts.
 
-## Étape actuelle
+## Étape actuelle : clé technique manuelle
 
-Le PDF a été lu, l'identité non-root et la région ont été revérifiées, et le préflight a enregistré l'absence initiale des ressources. Le manifest privé existe ; **ne pas relancer preflight ni effacer le manifest**. La console a été ouverte dans le navigateur local, mais aucun outil connecté ne permet de piloter cette session Chrome ; aucun cookie ni token du navigateur n'a été extrait.
+Le PDF est lu, le compte et le principal non-root sont conformes au manifest, la région est eu-north-1. La table créée par l'utilisateur est désormais retrouvée et ACTIVE ; son schéma, ses options, son ARN exact et sa date de création sont vérifiés. Le tag TP4LabId a été ajouté à cette seule table, puis le TableId enregistré. **Ne pas relancer preflight ni effacer le manifest.**
 
-L'utilisateur a ensuite indiqué que NovaUsersTP2A était ACTIVE. La vérification CLI retrouve pourtant zéro table en eu-north-1 dans le compte du manifest. Il faut rapprocher le compte, la région et le nom affichés en console avant de créer ou modifier quoi que ce soit. Voir [le diagnostic](preuves/table-recheck.txt) et [le rapport d'exécution](docs/rapport-execution.md). Un ResourceNotFoundException ne constitue pas un test de refus IAM du lecteur.
+Le blocage précédent est résolu : l'utilisateur a confirmé que la table n'avait pas encore été créée lors du premier diagnostic. L'agent a inséré 001 et 002 par CLI, sans écrasement, puis vérifié les cinq attributs String exacts et l'absence d'autres items. `tp2a-dynamo-reader` est créé, sans groupe ni policy. Son profil local a uniquement la région et la sortie JSON configurées ; aucune clé n'a été créée par l'agent.
+
+Suivre [la procédure manuelle de clé et configuration](docs/configuration-reader.md), puis confirmer simplement « profil reader configuré ». L'agent vérifiera STS et le refus implicite avant de poser toute policy. Le Deny SCP sur GetLoginProfile est [consigné séparément](preuves/audit-login-profile.txt) et n'est pas un test de refus DynamoDB.
 
 ## Déroulement du laboratoire
 
 1. **Effectué :** dix pages lues, exigences rapprochées et empreinte consignée. Aucun script ne considère la simple présence du PDF comme une lecture.
 2. **Effectué :** `python3 scripts/lab.py preflight` a vérifié l'identité, la région et l'absence exacte des ressources. Le manifest privé conserve compte, principal, ARN et marqueur d'appartenance. Toute ressource apparaissant ensuite doit être inspectée et reconnue avant reprise.
-3. Créer la table **dans la console AWS** : DynamoDB → Tables → Create table. Nom `NovaUsersTP2A`, partition `id` String, aucune sort key, Standard, On-demand, aucun index, Stream, réplication ou sauvegarde supplémentaire. Tag complémentaire `TP4LabId = bc8dba3dfb640383b620f69b`. Attendre ACTIVE. Création annoncée par l'utilisateur mais pas encore retrouvée par CLI : ne pas recréer sans résoudre cet écart.
-4. Une fois la table réelle vérifiée et reconnue, exécuter `python3 scripts/lab.py register-table`, puis `python3 scripts/lab.py seed` et `bash scripts/verify-table.sh`. L'insertion CLI a été expressément autorisée par l'utilisateur en variante du parcours console. Le script ne remplace jamais un item existant. Les contrôles inspectent aussi policy de ressource, sauvegardes et PITR, et conservent le TableId. Ces commandes ne sont pas encore exécutées.
-5. Ensuite `python3 scripts/lab.py create-reader` crée l'utilisateur exact `tp2a-dynamo-reader` sans permission, groupe, clé ni login console, avec un marqueur d'appartenance. Cette variante CLI du parcours IAM console est autorisée par la demande d'automatisation.
+3. **Effectué :** table créée dans la console AWS par l'utilisateur, vérifiée ACTIVE par CLI : `NovaUsersTP2A`, partition `id` String, aucune sort key, Standard, On-demand, aucun index, Stream, réplication, PITR ou sauvegarde supplémentaire. Tag complémentaire TP4LabId ajouté et observé ; TableId enregistré.
+4. **Effectué :** `register-table` puis `seed`. Les insertions conditionnelles par CLI, autorisées par l'utilisateur, ont créé les deux items exacts. Scan administrateur et GetItem 001/002 ont confirmé leurs données ; deux captures réelles sont disponibles. La table n'a pas de policy de ressource.
+5. **Effectué :** `create-reader` a créé `tp2a-dynamo-reader`. Les listes de groupes, policies inline/managed et clés sont vides. Aucun accès console créé par nos opérations. L'API GetLoginProfile est explicitement refusée par une SCP au rôle admin : son contrôle d'absence reste PARTIAL, sans modification des restrictions AWS.
 6. **Étape humaine :** IAM → Users → tp2a-dynamo-reader → Security credentials → Access keys → Create access key → CLI. Créer une seule clé. Dans votre terminal personnel, hors de Codex, après avoir sourcé le script Fish, saisir `aws configure --profile tp2a-reader` ; région `eu-north-1`, sortie `json`. Saisir directement les secrets au prompt. Ne jamais les coller dans la conversation, une commande, une capture ou Git. Appliquer `chmod 600 .secrets/config .secrets/credentials`. STS sera contrôlé par la suite initiale, sans exposer son ARN complet.
 7. Exécuter `python3 scripts/lab.py test-initial` : seul un véritable AccessDenied du GetItem projeté est accepté. STS n'atteste pas les droits DynamoDB.
 8. Exécuter `python3 scripts/lab.py apply-attributes`. La seule inline policy `TP2AFGAC` est installée. Attendre la propagation IAM (par exemple 30 secondes), puis `bash scripts/test-attributes.sh`. Tout échec arrête la suite et reste FAIL. Une relance remplace la dernière matrice de cette phase ; conserver ailleurs une copie expurgée si l'historique de propagation est utile.
 9. Après validation complète de l'étape A, exécuter `python3 scripts/lab.py apply-leadingkeys`. **Le même nom inline est remplacé**, les deux permissions ne sont jamais cumulées. Attendre la propagation, puis `bash scripts/test-leadingkeys.sh`.
 10. Lire [la matrice](docs/tests.md), effectuer les vraies captures non sensibles et produire le rapport pré-nettoyage. `bash scripts/cleanup-check.sh` vérifie les préconditions sans supprimer. **S'arrêter et attendre l'instruction explicite `CLEANUP`.**
 
-Les appels AWS sont faits par `subprocess` sans shell ni boto3. L'audit inspecte groupes, managed policies, policies inline, login console, permission boundary et policy de ressource de la table. Les restrictions d'organisation restent hors du périmètre vérifiable par ce seul audit ; les tests réels font foi. Aucune élévation automatique des droits n'est prévue si l'identité actuelle manque de permissions.
+Les appels AWS sont faits par `subprocess` sans shell ni boto3. L'audit inspecte groupes, managed policies, policies inline, permission boundary et policy de ressource. GetLoginProfile fait l'objet d'une tentative réelle ; le refus explicite par SCP est enregistré PARTIAL, sans être assimilé à une absence de login ni à un test reader. Tout autre problème d'audit arrête les scripts. Aucune élévation des droits ni modification de SCP n'est prévue. Les tests réels font foi pour les droits DynamoDB.
 
 ## Données fictives
 
@@ -79,6 +81,6 @@ Après `preflight`, `python3 scripts/validate-policies.py` valide les deux polic
 
 Le contrôle Markdown utilise `markdown-it-py`, déjà disponible dans cet environnement. Les scripts AWS et la validation des policies utilisent uniquement la bibliothèque standard Python et AWS CLI. Les commits préparatoires portent l'auteur technique local `Codex <codex@local.invalid>` ; aucune identité personnelle n'est configurée globalement.
 
-Les logs expurgés dans [preuves/](preuves/README.md) sont versionnables. Les JSON de résultats, la matrice et les captures doivent être relus avant un commit. Les captures PNG restent absentes tant qu'aucune vraie capture n'a été prise. Git est local uniquement ; aucune publication autorisée.
+Les logs expurgés dans [preuves/](preuves/README.md) sont versionnables. Les captures réelles 01-table-created.png et 02-items.png ont été prises dans des fenêtres de terminal dédiées affichant de nouvelles réponses AWS, puis revues visuellement. Les autres captures attendent les tests. `scripts/show-proof.py` prépare ces affichages sans numéro de compte ni ARN. Git est local uniquement ; aucune publication autorisée.
 
 Voir [compte-rendu](compte-rendu.md), [architecture](docs/architecture.md), [questions](docs/questions.md) et [nettoyage](docs/cleanup.md).

@@ -4,10 +4,10 @@
 
 | Contrôle | État observé |
 | --- | --- |
-| Table DynamoDB | Déclarée ACTIVE en console par l'utilisateur ; deux DescribeTable : ResourceNotFoundException, rc=254 ; ListTables : zéro table, rc=0 |
-| Items 001/002 | Non créés ; insertion suspendue tant que la table n'est pas retrouvée |
-| Utilisateur IAM | Absent au préflight : NoSuchEntity ; aucune création lancée |
-| Profil reader | Non configuré |
+| Table DynamoDB | ACTIVE, DescribeTable rc=0 ; id String, Standard, On-demand, options conformes et appartenance enregistrée |
+| Items 001/002 | Créés par CLI autorisée, sans écrasement ; Scan admin et GetItem 001/002 confirment exactement les valeurs fictives |
+| Utilisateur IAM | tp2a-dynamo-reader créé ; aucun groupe, policy inline/managed, permissions boundary ou clé au contrôle initial |
+| Profil reader | Région eu-north-1 et sortie JSON préparées ; saisie manuelle de la clé et confirmation attendues |
 | Refus initial | NOT TESTED |
 | Projection autorisée | NOT TESTED |
 | Attribut sensible refusé | NOT TESTED |
@@ -18,28 +18,23 @@
 | LeadingKeys 001 | NOT TESTED |
 | Accès 002 refusé | NOT TESTED |
 | Scan final refusé | NOT TESTED |
-| Captures | Aucune capture ; journaux CLI réels et expurgés disponibles |
+| Captures | 01-table-created.png et 02-items.png : captures réelles de réponses AWS dans des terminaux dédiés, revues visuellement |
 | Documentation | PDF lu, provenance et conformité documentées ; README, huit réponses et compte-rendu actualisés |
-| Tests locaux | Quinze tests hors ligne réussis ; modèles JSON et JSON privés avec ARN exact validés |
+| Tests locaux | Dix-huit tests hors ligne réussis ; modèles JSON et JSON privés avec ARN exact validés |
 | Git | Modifications conservées dans le dépôt local ; aucune publication |
 | Audit secrets | Fichiers privés exclus ; compte masqué dans les journaux ; audit local avant commit |
-| Ressources AWS restantes | Aucune table visible dans le compte/région du profil ; table déclarée en console à localiser ; aucune suppression effectuée |
+| Ressources AWS restantes | Table NovaUsersTP2A, items 001/002 et utilisateur tp2a-dynamo-reader conservés ; aucune policy FGAC posée ni suppression exécutée |
 
 **FINAL STATUS : PARTIAL**
 
-## Cause à résoudre avant reprise
+## Limite d'audit observée
 
-L'état console déclaré et l'observation CLI ne correspondent pas. Les hypothèses sont un autre compte/projet dans la console, une autre région, un nom différent ou une création qui reste à terminer. Aucune de ces hypothèses n'est affirmée comme cause établie. `ResourceNotFoundException` n'est ni un AccessDenied IAM attendu ni une preuve d'accès FGAC.
+GetLoginProfile, exécuté avec tp2a-admin, répond AccessDenied (rc=254) avec un **Deny explicite dans une SCP** sur iam:GetLoginProfile. Aucun login console n'a été créé par nos commandes ; son absence n'a pas pu être confirmée par cette API. Le contrôle D05 reste PARTIAL. Aucune SCP, permission ou offre AWS n'a été modifiée. Ce résultat ne valide ni le refus initial DynamoDB ni les droits FGAC du reader. Les autres lectures IAM ont réussi et constaté les listes vides.
 
-L'utilisateur doit comparer les contextes sans communiquer le numéro de compte ici. Pour vérifier localement le compte du profil, dans son terminal personnel uniquement :
+## Intervention humaine actuelle
 
-```fish
-source scripts/use-lab-env.fish
-aws sts get-caller-identity --profile tp2a-admin --query Account --output text
-```
+Créer l'unique clé technique dans IAM et la saisir uniquement dans le terminal personnel, selon [la procédure](configuration-reader.md). Aucun secret ni sortie STS n'est demandé dans la conversation. Confirmer seulement « profil reader configuré ». L'agent vérifiera alors l'identité et lancera le refus initial avant toute policy, puis les suites Attributes et LeadingKeys en remplaçant la même inline policy.
 
-Comparer ce résultat avec l'ID affiché dans la console AWS, puis confirmer seulement « même compte » ou « compte différent », la région et le nom de table. Ne pas envoyer la sortie STS ou une capture du bandeau de compte. L'option --query utilisée ici sélectionne un champ d'identité pour une comparaison locale ; elle n'est jamais utilisée comme protection de données DynamoDB.
+Le blocage précédent est résolu : l'utilisateur a indiqué que la table n'avait pas encore été créée lors du [diagnostic historique](../preuves/table-recheck.txt), puis l'a réellement créée. Elle est maintenant retrouvée ACTIVE dans le compte et la région du manifest.
 
-Après rapprochement : revérifier la table réelle et ses paramètres, enregistrer TableId/appartenance, insérer les deux items autorisés sans écrasement, vérifier leurs valeurs, puis créer le reader sans permission. L'unique clé technique restera une intervention humaine. Les policies et tous les tests sont ensuite prêts à être exécutés.
-
-Voir [preuve du diagnostic](../preuves/table-recheck.txt), [préflight](../preuves/preflight.txt), [matrice](tests.md) et [conformité au PDF](sources/README.md). Aucun nettoyage n'est autorisé.
+Preuves : [table](../preuves/01-table-created.png), [items](../preuves/02-items.png), [création lecteur](../preuves/reader-created.txt), [audit IAM](../preuves/reader-audit.txt), [limite SCP](../preuves/audit-login-profile.txt). Voir aussi [matrice](tests.md) et [conformité au PDF](sources/README.md). Aucun nettoyage n'est autorisé.

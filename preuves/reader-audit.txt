@@ -1,0 +1,22 @@
+2026-11-26T10:01:50.715960+00:00 Audit réel du lecteur après CreateUser.
+
+get-user : rc=0, erreur=None
+UserId conforme au manifest : True
+PermissionsBoundary présente : False
+
+list-groups-for-user : rc=0, erreur=None
+Nombre : 0
+
+list-attached-user-policies : rc=0, erreur=None
+Nombre : 0
+
+list-user-policies : rc=0, erreur=None
+Nombre : 0
+
+get-login-profile : rc=254, erreur=AccessDenied
+
+aws: [ERROR]: An error occurred (AccessDenied) when calling the GetLoginProfile operation: User: arn:aws:sts::[COMPTE_MASQUÉ]:assumed-role/AccountFullAccessRole/[SESSION_MASQUÉE] is not authorized to perform: iam:GetLoginProfile on resource: user tp2a-dynamo-reader with an explicit deny in a service control policy: [SCP_MASQUÉE] Go to [URL_AVEC_PARAMÈTRES_MASQUÉE] for complete details, or call the GetRequestAuthorizationDetails API with the following authorization id: [IDENTIFIANT_DIAGNOSTIC_MASQUÉ]
+
+
+list-access-keys : rc=0, erreur=None
+Nombre : 0

@@ -106,6 +106,25 @@ class SafetyTests(unittest.TestCase):
                 lab.preflight()
             api.assert_not_called()
 
+    def test_scp_login_audit_is_partial_and_recorded(self):
+        result = self.denied("GetLoginProfile", "AccessDenied")
+        result.stderr += " iam:GetLoginProfile with an explicit deny in a service control policy"
+        with patch.object(lab, "aws", return_value=result), patch.object(lab, "save") as save, patch.object(lab, "proof"):
+            manifest = {}
+            self.assertEqual(lab.audit_login_profile(manifest), "UNVERIFIED_SCP_DENY")
+            self.assertEqual(manifest["audit_limitations"]["get-login-profile"]["status"], "PARTIAL")
+            save.assert_called_once()
+
+    def test_generic_login_access_denied_is_not_ignored(self):
+        with patch.object(lab, "aws", return_value=self.denied("GetLoginProfile", "AccessDenied")):
+            with self.assertRaises(lab.Stop):
+                lab.audit_login_profile({})
+
+    def test_existing_console_login_stops_audit(self):
+        with patch.object(lab, "aws", return_value=self.response(value={"LoginProfile": {"UserName": lab.READER}})):
+            with self.assertRaises(lab.Stop):
+                lab.audit_login_profile({})
+
 
 if __name__ == "__main__":
     unittest.main()

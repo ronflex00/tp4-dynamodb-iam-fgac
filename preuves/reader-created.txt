@@ -1,0 +1,6 @@
+2026-11-26T10:02:47.949466+00:00 GetUser rc=0 : tp2a-dynamo-reader, UserId et marqueur conformes au manifest de CreateUser.
+CreateUser avait réussi avant l’arrêt de l’audit GetLoginProfile.
+ListGroupsForUser, ListAttachedUserPolicies, ListUserPolicies : listes vides, rc=0.
+Aucune permissions boundary ; aucun accès console créé par nos opérations.
+GetLoginProfile : AccessDenied explicite par SCP, rc=254, contrôle PARTIAL.
+ListAccessKeys : zéro clé, rc=0. Aucune clé créée par l’agent.
