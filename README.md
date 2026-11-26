@@ -14,6 +14,18 @@ Le lecteur peut maintenant lire uniquement `id`, `username`, `email` du dossier 
 - [Treize captures réelles et journaux expurgés](preuves/README.md), incluant la capture de clôture.
 - [Sujet officiel, empreinte et conformité](docs/sources/README.md).
 
+## Galerie des preuves AWS
+
+Les captures ci-dessous sont les preuves réelles expurgées, conservées dans `preuves/`.
+
+| Captures réelles | | |
+| --- | --- | --- |
+| ![Table ACTIVE](preuves/01-table-created.png) | ![Items fictifs 001 et 002](preuves/02-items.png) | ![Refus initial](preuves/03-reader-no-permission.png) |
+| ![Projection autorisée](preuves/04-projection-allowed.png) | ![Attribut ssn refusé](preuves/05-ssn-denied.png) | ![Projection absente refusée](preuves/06-no-projection-denied.png) |
+| ![Query autorisée](preuves/07-query-allowed.png) | ![Scan projeté, deux items](preuves/08-scan-two-items.png) | ![PutItem refusé](preuves/09-write-denied.png) |
+| ![LeadingKeys : 001 autorisé](preuves/10-leadingkeys-001.png) | ![LeadingKeys : 002 refusé](preuves/11-leadingkeys-002-denied.png) | ![Scan final refusé](preuves/12-scan-denied.png) |
+| ![Nettoyage vérifié](preuves/13-cleanup.png) |  |  |
+
 ## Source et méthode réellement suivie
 
 Le PDF officiel de dix pages a été lu. La première policy reproduit ses actions et conditions, avec le Sid ReadPublicAttributes. Le PDF demande deux JSON mais ne fournit que le premier ; la seconde policy est la construction complémentaire avec Attributes, LeadingKeys 001, contrôles Null et retrait de Scan.
