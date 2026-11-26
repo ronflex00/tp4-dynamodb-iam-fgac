@@ -1,33 +1,23 @@
-# Nettoyage final — autorisation en attente
+# Nettoyage final — terminé et vérifié
 
-**Aucune suppression n'est autorisée à ce stade.** Attendre le message explicite `CLEANUP` de l'utilisateur après le rapport pré-nettoyage.
+L’instruction explicite `CLEANUP` a été reçue. Le nettoyage a été exécuté le 26 novembre 2026 dans `eu-north-1`, après contrôle STS, inventaire des noms, TableId/UserId, tag d’appartenance et conservation des preuves. Aucun écart d’inventaire n’a été observé.
 
-## Préparation sans suppression
+## Résultats réellement observés
 
-```bash
-bash scripts/cleanup-check.sh
-```
+Le journal [preuves/cleanup.txt](../preuves/cleanup.txt), les [résultats structurés](../preuves/results-cleanup.json) et la [capture réelle](../preuves/13-cleanup.png) documentent les 13 étapes C00–C12. Chaque vérification de suppression a été distinguée d’un refus IAM :
 
-Ce contrôle exige le manifest privé, le même compte, le même principal admin, la même région, les marqueurs du laboratoire, les TableId/UserId attendus, la table ACTIVE, les deux items conformes, la policy B et toutes les suites observées. Il n'exécute aucune suppression et ne vaut pas autorisation.
+- C00 : identité, région, appartenance, inventaire et sauvegarde des preuves vérifiés.
+- C01–C02 : l’unique clé a été désactivée (état Inactive observé), supprimée, puis la liste était vide.
+- C03–C04 : inline `TP2AFGAC` supprimée ; `GetUserPolicy` a répondu `NoSuchEntity`; les listes de permissions/groupes étaient vides et le UserId conforme.
+- C05–C07 : utilisateur supprimé ; `GetUser` a répondu `NoSuchEntity` et `ListUsers` confirmait son absence.
+- C08–C10 : seule `NovaUsersTP2A` supprimée ; `DescribeTable` a répondu `ResourceNotFoundException` et `ListTables` confirmait son absence en `eu-north-1`.
+- C11 : `aws logout --profile tp2a-admin` rc=0 et cache de login vide.
+- C12 : seul le `.secrets/` du projet TP4 a été supprimé et son absence vérifiée. `~/.aws`, le compte AWS, le Builder ID et MFA n’ont pas été ciblés.
 
-L'audit GetLoginProfile conserve sa limite PARTIAL lorsqu'une SCP refuse explicitement cette lecture ; ce refus ne vaut pas preuve d'absence d'un accès console. Cette limite doit figurer dans le rapport, même si les tests DynamoDB ont ensuite tous été observés conformes.
+## Portée et limite d’audit
 
-## Exécution après autorisation uniquement
+Aucune ressource hors TP4, aucun rôle `/managed/`, aucune SCP, aucun compte ou MFA n’a été modifié. L’audit préalable de `GetLoginProfile` reste **PARTIAL** : une SCP a renvoyé un Deny explicite. `AccessDenied` n’a jamais été traité comme preuve de suppression ; les absences ont été confirmées par les réponses `NoSuchEntity`/`ResourceNotFoundException` et les opérations de liste.
 
-```bash
-bash scripts/cleanup.sh CLEANUP
-```
+Les 12 captures initiales, les 23 journaux de tests, les JSON de résultats et les empreintes ont été conservés avant suppression. L’archive expurgée est dans `downloads/` (ignorée par Git) ; le manifeste des empreintes versionné est [preuves/preservation-before-cleanup.json](../preuves/preservation-before-cleanup.json).
 
-Le mot fourni en argument sert de garde-fou ; l'opérateur doit aussi avoir reçu l'instruction explicite dans la conversation. Le script ne peut pas vérifier seul le consentement humain.
-
-1. Contrôler l'identité et les deux ressources exactes avant la première suppression ; refuser un autre compte, principal, tag ou identifiant unique.
-2. Désactiver puis supprimer l'unique Access Key de `tp2a-dynamo-reader` ; ne jamais afficher son identifiant ou secret. Vérifier la liste vide.
-3. Supprimer uniquement l'inline policy `TP2AFGAC`, puis cet utilisateur. Toute policy, groupe ou ressource inattendue bloque le script.
-4. Supprimer uniquement `NovaUsersTP2A`. Attendre puis observer `ResourceNotFoundException` ; vérifier aussi `NoSuchEntity` pour l'utilisateur. Un AccessDenied ne prouve aucune absence.
-5. Terminer le seul profil admin par `aws logout --profile tp2a-admin`, conformément à la [documentation CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html).
-6. Supprimer uniquement `/home/gatta/Downloads/TP4/.secrets`, après ces observations. Préserver Builder ID, MFA et preuves non sensibles. Ne pas toucher à `~/.aws` ni aux dossiers TP3.
-7. Relire `preuves/cleanup.txt`, faire une vraie capture `13-cleanup.png`, mettre à jour le compte-rendu et le rapport final, exécuter l'audit des secrets puis créer un commit local.
-
-Si le nettoyage est interrompu, conserver le manifest et les profils ; ne pas annoncer CLEANUP PASS. Le script peut reprendre si une ressource est déjà absente ou une clé a déjà été supprimée, sans étendre la portée. Une session expirée doit être réauthentifiée avant la reprise. Ne jamais supprimer le manifest pour contourner un contrôle d'appartenance.
-
-Statut observé : **NOT TESTED — nettoyage non lancé et aucune autorisation CLEANUP reçue.**
+**Statut nettoyage : PASS.** Voir le [rapport final](rapport-final.md).

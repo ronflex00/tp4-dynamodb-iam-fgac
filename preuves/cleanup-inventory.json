@@ -1,0 +1,17 @@
+{
+  "observed_at": "2026-11-26T10:33:07.398592+00:00",
+  "account_verified": true,
+  "admin_principal_verified": true,
+  "region": "eu-north-1",
+  "table": "NovaUsersTP2A",
+  "table_id_matches": true,
+  "reader": "tp2a-dynamo-reader",
+  "user_id_matches": true,
+  "lab_markers_verified": true,
+  "policy": "TP2AFGAC",
+  "policy_version": "leadingkeys",
+  "initial_access_key_count": 1,
+  "preserved_captures": 12,
+  "preserved_reader_tests": 23,
+  "get_login_profile_audit": "PARTIAL (SCP)"
+}

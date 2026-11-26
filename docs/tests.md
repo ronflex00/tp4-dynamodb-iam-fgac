@@ -1,6 +1,6 @@
 # Matrice des tests
 
-Résultats AWS uniquement. `NOT TESTED` signifie aucune observation. Les tests locaux ne valident pas IAM.
+Résultats AWS et contrôles CLI/locaux explicitement identifiés. Les lignes D, I, A et B décrivent l'état avant nettoyage ; les lignes C relatent le nettoyage autorisé. `NOT TESTED` signifie aucune observation. Les tests unitaires ne valident pas IAM.
 
 | Étape | Identité | Action | Clé | Projection | Attendu | Observé | Statut | Preuve |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -34,6 +34,19 @@ Résultats AWS uniquement. `NOT TESTED` signifie aucune observation. Les tests l
 | B09 (leadingkeys) | tp2a-reader | get-item | 001 | internal_note | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B09.txt) |
 | B10 (leadingkeys) | tp2a-reader | update-item | 001 | absente | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B10.txt) |
 | B11 (leadingkeys) | tp2a-reader | delete-item | 001 | absente | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B11.txt) |
+| C00 | tp2a-admin | Inventaire et conservation | — | — | compte/noms/identifiants exacts, preuves sauvegardées | rc=0 ; lectures, listes, appartenance et sauvegarde vérifiées | PASS | [Journal](../preuves/cleanup.txt) |
+| C01 | tp2a-admin | UpdateAccessKey + ListAccessKeys | — | — | unique clé Inactive | rc=0 ; unique clé Inactive observée | PASS | [Journal](../preuves/cleanup.txt) |
+| C02 | tp2a-admin | DeleteAccessKey + ListAccessKeys | — | — | liste vide | rc=0 ; zéro clé observée | PASS | [Journal](../preuves/cleanup.txt) |
+| C03 | tp2a-admin | DeleteUserPolicy + GetUserPolicy | — | — | TP2AFGAC absente | suppression rc=0 ; GetUserPolicy rc=254 NoSuchEntity | PASS | [Journal](../preuves/cleanup.txt) |
+| C04 | tp2a-admin | Permissions restantes et UserId | — | — | aucune policy/groupe, utilisateur exact | rc=0 ; listes vides et UserId conforme | PASS | [Journal](../preuves/cleanup.txt) |
+| C05 | tp2a-admin | DeleteUser | — | — | suppression du seul lecteur | rc=0 | PASS | [Journal](../preuves/cleanup.txt) |
+| C06 | tp2a-admin | GetUser | — | — | NoSuchEntity | rc=254 ; NoSuchEntity observé | PASS | [Journal](../preuves/cleanup.txt) |
+| C07 | tp2a-admin | ListUsers | — | — | nom exact absent | rc=0 ; tp2a-dynamo-reader absent | PASS | [Journal](../preuves/cleanup.txt) |
+| C08 | tp2a-admin | DeleteTable | — | — | suppression du seul ARN du laboratoire | rc=0 ; suppression demandée | PASS | [Journal](../preuves/cleanup.txt) |
+| C09 | tp2a-admin | DescribeTable | — | — | ResourceNotFoundException | rc=254 ; ResourceNotFoundException observée | PASS | [Journal](../preuves/cleanup.txt) |
+| C10 | tp2a-admin | ListTables | — | — | nom exact absent | rc=0 ; NovaUsersTP2A absente en eu-north-1 | PASS | [Journal](../preuves/cleanup.txt) |
+| C11 | CLI local | aws logout tp2a-admin | — | — | session CLI terminée et cache vide | rc=0 ; cache login vide | PASS | [Journal](../preuves/cleanup.txt) |
+| C12 | Fichiers locaux | Suppression .secrets TP4 | — | — | seul dossier privé du TP absent | absence vérifiée ; ~/.aws non visé, Builder ID et MFA préservés | PASS | [Journal](../preuves/cleanup.txt) |
 
 A01–A07 et B01–B08 reprennent les scénarios de votre demande. A08–A11 et B09–B11 sont des contrôles complémentaires (002, internal_note, UpdateItem, DeleteItem). Les écritures Update/Delete portent une condition fausse pour éviter une altération si les droits sont trop larges ; une erreur ConditionalCheckFailedException est FAIL.
 

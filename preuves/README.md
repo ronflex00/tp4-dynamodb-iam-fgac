@@ -18,7 +18,7 @@ Les captures 01 à 12 **proviennent de vrais écrans**. Les deux premières mont
 | 10-leadingkeys-001.png | B01 | CAPTURE RÉELLE REVUE |
 | 11-leadingkeys-002-denied.png | B02 | CAPTURE RÉELLE REVUE |
 | 12-scan-denied.png | B07 | CAPTURE RÉELLE REVUE |
-| 13-cleanup.png | Absences après nettoyage autorisé | NON AUTORISÉ |
+| 13-cleanup.png | Journal expurgé C00–C12, absences vérifiées, session terminée | CAPTURE RÉELLE REVUE APRÈS CLEANUP |
 
 Afficher de préférence le journal déjà expurgé dans un terminal neutre avant une vraie capture. Masquer le numéro de compte et le bandeau d'identité dans la console. Ne jamais photographier les écrans de création de clé, un QR MFA, les cookies, les codes de connexion ou le contenu de `.secrets/`. Relire visuellement chaque image avant Git.
 

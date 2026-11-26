@@ -71,6 +71,22 @@ class SafetyTests(unittest.TestCase):
                 lab.cleanup(None)
             api.assert_not_called()
 
+    def test_cleanup_changed_account_stops_before_mutations(self):
+        manifest = {"account": "1" * 12, "admin_arn": "arn:aws:iam::" + "1" * 12 + ":user/lab-admin"}
+        other = {"Account": "2" * 12, "Arn": "arn:aws:iam::" + "2" * 12 + ":user/lab-admin"}
+        with patch.object(lab, "state", return_value=manifest), patch.object(lab, "aws", return_value=self.response(value=other)) as api:
+            with self.assertRaises(lab.Stop):
+                lab.cleanup("CLEANUP")
+            self.assertEqual(api.call_count, 1)
+            self.assertEqual(api.call_args.args[1:3], ("sts", "get-caller-identity"))
+
+    def test_cleanup_without_preserved_evidence_stops_before_mutations(self):
+        manifest = {"table_id": "table-test", "user_id": "user-test", "phase": "leadingkeys"}
+        with patch.object(lab, "state", return_value=manifest), patch.object(lab, "guard"), patch.object(lab, "all_passed", return_value=True), patch.object(lab, "verify_preserved_evidence", side_effect=lab.Stop("Preuve manquante")), patch.object(lab, "aws") as api:
+            with self.assertRaises(lab.Stop):
+                lab.cleanup("CLEANUP")
+            api.assert_not_called()
+
     def test_absent_requires_exact_error(self):
         with patch.object(lab, "aws", return_value=self.denied("DescribeTable")):
             with self.assertRaises(lab.Stop):

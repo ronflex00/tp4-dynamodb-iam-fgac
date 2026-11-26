@@ -21,6 +21,7 @@ NAMES = {
     "B01": "10-leadingkeys-001.png",
     "B02": "11-leadingkeys-002-denied.png",
     "B07": "12-scan-denied.png",
+    "cleanup": "13-cleanup.png",
 }
 
 
@@ -29,13 +30,19 @@ def hypr(command):
     return json.loads(result.stdout)
 
 
+def visible_proof_window(client):
+    return hypr("activewindow").get("address") == client["address"]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("scenario", choices=NAMES)
     parser.add_argument("--display", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
     journal = ROOT / "preuves" / f"{args.scenario}.txt"
-    marker = ROOT / ".secrets" / f"capture-{args.scenario}.ready"
+    work = ROOT / "downloads/capture-work"
+    work.mkdir(parents=True, exist_ok=True, mode=0o700)
+    marker = work / f"capture-{args.scenario}.ready"
     if not journal.is_file():
         raise SystemExit("Journal réel absent : aucune capture créée")
     if args.display:
@@ -49,7 +56,7 @@ def main():
     app = "tp4-proof-" + args.scenario.lower()
     output = ROOT / "downloads/captures" / NAMES[args.scenario]
     output.parent.mkdir(parents=True, exist_ok=True)
-    with (ROOT / ".secrets/capture-terminal.stderr").open("a") as log:
+    with (work / "capture-terminal.stderr").open("a") as log:
         process = subprocess.Popen([
             "foot", "--config=/dev/null", "--hold", "--app-id", app,
             "--title", "TP4 — " + args.scenario, "--font", "monospace:size=11",
@@ -68,9 +75,15 @@ def main():
             if len(clients) != 1:
                 raise RuntimeError("Fenêtre de preuve non identifiée de façon unique")
             client = clients[0]
-            if hypr("activewindow").get("address") != client["address"]:
-                raise RuntimeError("Une autre fenêtre est active : capture annulée")
+            for _ in range(20):
+                if visible_proof_window(client):
+                    break
+                time.sleep(0.1)
+            else:
+                raise RuntimeError("La fenêtre de preuve n'est pas visible sans recouvrement : capture annulée")
             time.sleep(0.4)
+            if not visible_proof_window(client):
+                raise RuntimeError("La visibilité de la preuve a changé : capture annulée")
             x, y = client["at"]
             width, height = client["size"]
             if height < 1000:

@@ -347,7 +347,7 @@ def matrix():
         path = PROOFS / f"results-{phase}.json"
         if path.exists():
             records.update({r["id"]: r for r in json.loads(path.read_text())})
-    text = "# Matrice des tests\n\nRésultats AWS uniquement. `NOT TESTED` signifie aucune observation. Les tests locaux ne valident pas IAM.\n\n"
+    text = "# Matrice des tests\n\nRésultats AWS et contrôles CLI/locaux explicitement identifiés. Les lignes D, I, A et B décrivent l'état avant nettoyage ; les lignes C relatent le nettoyage autorisé. `NOT TESTED` signifie aucune observation. Les tests unitaires ne valident pas IAM.\n\n"
     text += "| Étape | Identité | Action | Clé | Projection | Attendu | Observé | Statut | Preuve |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n"
     admin_results = PROOFS / "results-admin.json"
     if admin_results.exists():
@@ -361,6 +361,12 @@ def matrix():
             observed = record.get("observed", "Non exécuté")
             evidence = f"[Journal](../preuves/{record['proof']})" if record else "—"
             text += f"| {ident} ({phase}) | tp2a-reader | {action} | {key or '—'} | {projection or 'absente'} | {'SUCCESS' if allow else 'AccessDenied'} | {observed} | {record.get('status', 'NOT TESTED')} | {evidence} |\n"
+    cleanup_results = PROOFS / "results-cleanup.json"
+    if cleanup_results.exists():
+        for result in json.loads(cleanup_results.read_text()):
+            fields = [result[key] for key in ("step", "identity", "action", "key", "projection", "expected", "observed", "status")]
+            fields.append(f"[Journal](../preuves/{result['proof']})")
+            text += "| " + " | ".join(fields) + " |\n"
     text += "\nA01–A07 et B01–B08 reprennent les scénarios de votre demande. A08–A11 et B09–B11 sont des contrôles complémentaires (002, internal_note, UpdateItem, DeleteItem). Les écritures Update/Delete portent une condition fausse pour éviter une altération si les droits sont trop larges ; une erreur ConditionalCheckFailedException est FAIL.\n\nLes retours réels et l'heure UTC sont conservés dans les journaux expurgés. Attendre la propagation IAM, puis relancer une suite si nécessaire : aucun échec n'est converti automatiquement en succès.\n"
     (ROOT / "docs/tests.md").write_text(text)
 
@@ -537,12 +543,48 @@ def cleanup_check():
     print("READY_FOR_CLEANUP — ressources identifiées ; aucune suppression. Attendre l'instruction explicite CLEANUP.")
 
 
+def verify_preserved_evidence():
+    record = json.loads((PROOFS / "preservation-before-cleanup.json").read_text())
+    expected = {str(p.relative_to(ROOT)) for p in PROOFS.glob("*.png") if p.name != "13-cleanup.png"}
+    require(len(expected) == 12, "Les douze captures pré-nettoyage ne sont pas présentes")
+    expected.update(f"preuves/{row[0]}.txt" for phase in ("initial", "attributes", "leadingkeys") for row in definitions(phase))
+    expected.update(f"preuves/results-{phase}.json" for phase in ("initial", "attributes", "leadingkeys"))
+    require(set(record["immutable_evidence"]) == expected, "Inventaire des preuves préservées différent")
+    for name, digest in record["immutable_evidence"].items():
+        path = ROOT / name
+        require(path.is_file() and not path.is_symlink() and hashlib.sha256(path.read_bytes()).hexdigest() == digest,
+                "Preuve absente ou modifiée : " + name)
+    archive = ROOT / record["archive"]
+    require(archive.resolve().is_relative_to(ROOT / "downloads") and not archive.is_symlink(), "Archive hors du dossier autorisé")
+    require(archive.is_file() and hashlib.sha256(archive.read_bytes()).hexdigest() == record["archive_sha256"], "Archive expurgée absente ou modifiée")
+    return record
+
+
 def cleanup(authorization):
     require(authorization == "CLEANUP", "Autorisation explicite CLEANUP requise ; aucune suppression")
     manifest = state()
     guard(manifest)
+    require(ROOT == Path("/home/gatta/Downloads/TP4") and PRIVATE.resolve() == ROOT / ".secrets" and not PRIVATE.is_symlink(), "Chemin de secrets non conforme")
     require(manifest.get("table_id") and manifest.get("user_id"), "Appartenance non enregistrée")
+    require(manifest.get("phase") == "leadingkeys", "Phase finale différente de l'inventaire")
     require(all(all_passed(p) for p in ("initial", "attributes", "leadingkeys")), "Suites incomplètes : examiner avant nettoyage")
+    verify_preserved_evidence()
+    events = []
+
+    def record(step, action, expected, observed, identity="tp2a-admin", finished=False):
+        events.append(dict(step=step, identity=identity, action=action, key="—", projection="—",
+                           expected=expected, observed=observed, status="PASS", proof="cleanup.txt", date_utc=now()))
+        write_json(PROOFS / "results-cleanup.json", events)
+        lines = [f"Date UTC : {now()}", "Autorisation explicite CLEANUP reçue dans la conversation.",
+                 "Compte/principal STS et région eu-north-1 conformes au manifest ; identifiants masqués.",
+                 "Preuves : 12 captures et 23 journaux conservés, empreintes et archive expurgée vérifiées."]
+        lines += [f"{e['step']} {e['action']} : {e['observed']} — {e['status']}" for e in events]
+        lines += ["Limite historique GetLoginProfile : PARTIAL, refus explicite par SCP ; aucune SCP modifiée.",
+                  "CLEANUP PASS" if finished else "NETTOYAGE EN COURS — aucun résultat final anticipé."]
+        proof("cleanup.txt", "\n".join(lines))
+        matrix()
+        print(f"{step} {action} : {observed}", flush=True)
+
     # Vérifier les deux ressources avant la première suppression. Reprise possible après interruption.
     user_result = aws("tp2a-admin", "iam", "get-user", "--user-name", READER)
     user_exists = user_result.returncode == 0
@@ -556,20 +598,54 @@ def cleanup(authorization):
     table_result = aws("tp2a-admin", "dynamodb", "describe-table", "--table-name", TABLE)
     table_exists = table_result.returncode == 0
     if table_exists:
-        table(manifest)
+        table_value = parse(table_result)["Table"]
+        require(table_value["TableArn"] == manifest["table_arn"] and table_value["TableId"] == manifest["table_id"], "La table a été remplacée : arrêt")
+        require(not table_value.get("DeletionProtectionEnabled", False), "Protection de suppression inattendue : arrêt")
+        if table_value["TableStatus"] != "DELETING":
+            table(manifest)
     else:
         require(error_code(table_result) == "ResourceNotFoundException", "Absence table non démontrée")
+    listed_users = admin("iam", "list-users")["Users"]
+    matched_users = [u for u in listed_users if u["UserName"] == READER]
+    require(bool(matched_users) == user_exists and (not matched_users or matched_users[0]["UserId"] == manifest["user_id"]), "ListUsers ne correspond pas à l'inventaire du lecteur")
+    require((TABLE in admin("dynamodb", "list-tables")["TableNames"]) == table_exists, "ListTables ne correspond pas à l'inventaire de la table")
+    write_json(PROOFS / "cleanup-inventory.json", dict(observed_at=now(), account_verified=True,
+        admin_principal_verified=True, region=manifest["region"], table=TABLE, table_id_matches=True,
+        reader=READER, user_id_matches=True, lab_markers_verified=True, policy=POLICY,
+        policy_version="leadingkeys", initial_access_key_count=len(keys),
+        preserved_captures=12, preserved_reader_tests=23, get_login_profile_audit="PARTIAL (SCP)"))
+    record("C00", "Inventaire et conservation", "compte/noms/identifiants exacts, preuves sauvegardées", "rc=0 ; lectures, listes, appartenance et sauvegarde vérifiées")
     if user_exists:
         for entry in keys:
             # L'identifiant n'est transmis qu'au processus AWS, jamais aux journaux.
             admin("iam", "update-access-key", "--user-name", READER, "--access-key-id", entry["AccessKeyId"], "--status", "Inactive")
+            disabled = admin("iam", "list-access-keys", "--user-name", READER)["AccessKeyMetadata"]
+            require(len(disabled) == 1 and disabled[0]["AccessKeyId"] == entry["AccessKeyId"] and disabled[0]["Status"] == "Inactive", "Désactivation de l'unique clé non confirmée")
+            record("C01", "UpdateAccessKey + ListAccessKeys", "unique clé Inactive", "rc=0 ; unique clé Inactive observée")
             admin("iam", "delete-access-key", "--user-name", READER, "--access-key-id", entry["AccessKeyId"])
         require(not admin("iam", "list-access-keys", "--user-name", READER)["AccessKeyMetadata"], "Clé encore présente")
+        record("C02", "DeleteAccessKey + ListAccessKeys", "liste vide", "rc=0 ; zéro clé observée")
         if names:
             admin("iam", "delete-user-policy", "--user-name", READER, "--policy-name", POLICY)
+        absent("iam", "get-user-policy", "NoSuchEntity", "--user-name", READER, "--policy-name", POLICY)
+        record("C03", "DeleteUserPolicy + GetUserPolicy", "TP2AFGAC absente", ("suppression rc=0 ; " if names else "déjà absente ; ") + "GetUserPolicy rc=254 NoSuchEntity")
+        require(not admin("iam", "list-user-policies", "--user-name", READER)["PolicyNames"], "Policy inline restante")
+        require(not admin("iam", "list-attached-user-policies", "--user-name", READER)["AttachedPolicies"], "Managed policy restante : arrêt")
+        require(not admin("iam", "list-groups-for-user", "--user-name", READER)["Groups"], "Groupe restant : arrêt")
+        require(admin("iam", "get-user", "--user-name", READER)["User"]["UserId"] == manifest["user_id"], "Utilisateur remplacé : arrêt")
+        record("C04", "Permissions restantes et UserId", "aucune policy/groupe, utilisateur exact", "rc=0 ; listes vides et UserId conforme")
         admin("iam", "delete-user", "--user-name", READER)
+        record("C05", "DeleteUser", "suppression du seul lecteur", "rc=0")
+    absent("iam", "get-user", "NoSuchEntity", "--user-name", READER)
+    record("C06", "GetUser", "NoSuchEntity", "rc=254 ; NoSuchEntity observé")
+    users = admin("iam", "list-users")["Users"]
+    require(all(user["UserName"] != READER for user in users), "Lecteur encore présent dans ListUsers")
+    record("C07", "ListUsers", "nom exact absent", "rc=0 ; tp2a-dynamo-reader absent")
     if table_exists:
-        admin("dynamodb", "delete-table", "--table-name", TABLE)
+        current = admin("dynamodb", "describe-table", "--table-name", TABLE)["Table"]
+        require(current["TableId"] == manifest["table_id"] and current["TableArn"] == manifest["table_arn"], "Table remplacée avant suppression : arrêt")
+        admin("dynamodb", "delete-table", "--table-name", manifest["table_arn"])
+        record("C08", "DeleteTable", "suppression du seul ARN du laboratoire", "rc=0 ; suppression demandée")
         # Attente courte par interrogation, aucun journal de données/identifiants.
         for attempt in range(24):
             result = aws("tp2a-admin", "dynamodb", "describe-table", "--table-name", TABLE)
@@ -580,13 +656,21 @@ def cleanup(authorization):
         else:
             raise Stop("Table encore visible ; nettoyage PARTIAL, conserver .secrets")
     absent("dynamodb", "describe-table", "ResourceNotFoundException", "--table-name", TABLE)
-    absent("iam", "get-user", "NoSuchEntity", "--user-name", READER)
+    record("C09", "DescribeTable", "ResourceNotFoundException", "rc=254 ; ResourceNotFoundException observée")
+    tables = admin("dynamodb", "list-tables")["TableNames"]
+    require(TABLE not in tables, "Table encore présente dans ListTables")
+    record("C10", "ListTables", "nom exact absent", "rc=0 ; NovaUsersTP2A absente en eu-north-1")
     # La session de ce seul profil est terminée ; aucun logout --all.
     result = subprocess.run(["aws", "logout", "--profile", "tp2a-admin"], env=isolated(), text=True, capture_output=True)
     require(result.returncode == 0, "Ressources absentes ; logout a échoué, conserver .secrets")
+    cache = PRIVATE / "login-cache"
+    require(not any(p.is_file() for p in cache.rglob("*")), "Cache de connexion non vide après logout ; conserver .secrets")
+    record("C11", "aws logout tp2a-admin", "session CLI terminée et cache vide", "rc=0 ; cache login vide", identity="CLI local")
     require(PRIVATE == Path("/home/gatta/Downloads/TP4/.secrets") and not PRIVATE.is_symlink(), "Chemin de secrets non conforme")
+    verify_preserved_evidence()
     shutil.rmtree(PRIVATE)
-    proof("cleanup.txt", f"{now()} CLEANUP PASS\nAccess Key désactivée puis supprimée ; policy TP2AFGAC et utilisateur supprimés.\nTable : ResourceNotFoundException observée. Utilisateur : NoSuchEntity observée.\nSession tp2a-admin terminée ; seul .secrets du TP4 supprimé. Builder ID et MFA conservés.\n")
+    require(not PRIVATE.exists(), "Le dossier .secrets existe encore")
+    record("C12", "Suppression .secrets TP4", "seul dossier privé du TP absent", "absence vérifiée ; ~/.aws non visé, Builder ID et MFA préservés", identity="Fichiers locaux", finished=True)
     print("CLEANUP PASS — absences observées ; session terminée ; secrets locaux supprimés.")
 
 

@@ -2,7 +2,7 @@
 
 Nova Services · Gouvernance des identités et des habilitations · Formateur : Mohammad Jabbari · Exécution : 26 novembre 2026, Europe/Paris.
 
-**READY_FOR_CLEANUP.** Les 23 scénarios DynamoDB ont été exécutés : six PASS et dix-sept EXPECTED DENY, sans FAIL ni test reader requis non exécuté. Douze captures réelles et les journaux expurgés sont conservés. La table, les données, le lecteur, sa clé et sa policy restent présents. Aucun nettoyage ni push effectué. GetLoginProfile demeure un contrôle administrateur PARTIAL à cause d'une SCP ; cette limite n'est pas assimilée à un succès FGAC.
+**COMPLETE — nettoyage autorisé, exécuté et vérifié.** Les 23 scénarios DynamoDB antérieurs au nettoyage ont été exécutés : six PASS et dix-sept EXPECTED DENY, sans FAIL ni test reader requis non exécuté. Douze captures initiales et les journaux expurgés ont été préservés ; une treizième capture montre le journal de nettoyage. La clé, la policy, l’utilisateur et la table TP4 sont supprimés. Aucun push effectué. GetLoginProfile demeure un contrôle administrateur PARTIAL à cause d'une SCP ; cette limite n'est pas assimilée à un succès FGAC.
 
 ## 1. Contexte
 
@@ -118,12 +118,10 @@ Aucune personne responsable, validation formelle ou date de revue inventée. [R�
 
 ## 18. Nettoyage
 
-**NON LANCÉ.** cleanup-check, qui ne supprime rien, a terminé rc=0 et READY_FOR_CLEANUP. [Preuve de contrôle](preuves/pre-cleanup-check.txt), [rapport complet](docs/rapport-pre-cleanup.md). Ce statut conserve la limite d'audit SCP mentionnée plus haut.
-
-La table, les deux items, l'utilisateur, l'unique clé active, l'inline LeadingKeys et les profils/sessions restent présents. Ni désactivation de clé, ni suppression de policy/table/user, ni logout, ni retrait du dossier .secrets n'ont été exécutés. Aucune capture 13-cleanup.png n'existe. Attendre l'instruction explicite CLEANUP avant le [protocole final](docs/cleanup.md). Builder ID, MFA et ressources extérieures préservés.
+**TERMINÉ ET VÉRIFIÉ.** Après l’autorisation explicite CLEANUP, l’inventaire d’appartenance a été contrôlé et les opérations C00–C12 ont toutes abouti. La clé a été observée Inactive puis supprimée ; la policy inline est absente ; `GetUser`/`ListUsers` confirment l’absence du lecteur ; `DescribeTable`/`ListTables` confirment l’absence de la table. `aws logout` a rc=0 et le cache de session est vide. Seul le dossier `.secrets/` TP4 a été supprimé. Voir le [journal](preuves/cleanup.txt), la [capture réelle](preuves/13-cleanup.png), le [protocole exécuté](docs/cleanup.md) et le [rapport final](docs/rapport-final.md). Builder ID, MFA, `~/.aws` et ressources extérieures préservés. GetLoginProfile reste PARTIAL à cause du Deny SCP.
 
 ## 19. Conclusion
 
-Les résultats réels établissent la restriction des attributs, puis de la partition 001. Les vingt-trois tests reader sont conformes et documentés ; douze captures et les journaux expurgés sont conservés. La seule limite technique d'audit connue est GetLoginProfile refusé par SCP, sans contournement. Statut : **READY_FOR_CLEANUP**, avec ressources conservées et absence de publication GitHub.
+Les résultats réels établissent la restriction des attributs, puis de la partition 001. Les 23 tests reader sont conformes et documentés ; 12 captures initiales ont été préservées, avec une 13e capture du nettoyage. La limite d’audit GetLoginProfile refusé par SCP est documentée sans contournement. Statut final : **COMPLETE**, nettoyage vérifié ; aucun push GitHub. Les résultats FGAC décrivent l’état avant suppression.
 
-Validation locale : dix-huit tests unitaires réussis ; JSON/ARN, Markdown, liens et syntaxe Bash/Fish contrôlés. L'audit vérifie les exclusions Git, les motifs sensibles et compare en mémoire les credentials locaux aux fichiers suivables sans affichage de valeurs. Les captures ont été revues visuellement. [Journal de validation](preuves/local-validation.txt). Commit local des modifications validées, sans push.
+Validation locale finale : 20 tests unitaires réussis ; liens Markdown, JSON, Bash/Fish, exclusions Git, preuves et scan statique des secrets vérifiés. La comparaison exacte des credentials aux fichiers suivables a réussi en mémoire avant la suppression du dossier privé, sans afficher de valeur. [Journal de validation](preuves/local-validation.txt). Commit local des modifications validées, sans push.

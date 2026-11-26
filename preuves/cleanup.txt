@@ -1,0 +1,19 @@
+Date UTC : 2026-11-26T10:33:38.736151+00:00
+Autorisation explicite CLEANUP reçue dans la conversation.
+Compte/principal STS et région eu-north-1 conformes au manifest ; identifiants masqués.
+Preuves : 12 captures et 23 journaux conservés, empreintes et archive expurgée vérifiées.
+C00 Inventaire et conservation : rc=0 ; lectures, listes, appartenance et sauvegarde vérifiées — PASS
+C01 UpdateAccessKey + ListAccessKeys : rc=0 ; unique clé Inactive observée — PASS
+C02 DeleteAccessKey + ListAccessKeys : rc=0 ; zéro clé observée — PASS
+C03 DeleteUserPolicy + GetUserPolicy : suppression rc=0 ; GetUserPolicy rc=254 NoSuchEntity — PASS
+C04 Permissions restantes et UserId : rc=0 ; listes vides et UserId conforme — PASS
+C05 DeleteUser : rc=0 — PASS
+C06 GetUser : rc=254 ; NoSuchEntity observé — PASS
+C07 ListUsers : rc=0 ; tp2a-dynamo-reader absent — PASS
+C08 DeleteTable : rc=0 ; suppression demandée — PASS
+C09 DescribeTable : rc=254 ; ResourceNotFoundException observée — PASS
+C10 ListTables : rc=0 ; NovaUsersTP2A absente en eu-north-1 — PASS
+C11 aws logout tp2a-admin : rc=0 ; cache login vide — PASS
+C12 Suppression .secrets TP4 : absence vérifiée ; ~/.aws non visé, Builder ID et MFA préservés — PASS
+Limite historique GetLoginProfile : PARTIAL, refus explicite par SCP ; aucune SCP modifiée.
+CLEANUP PASS

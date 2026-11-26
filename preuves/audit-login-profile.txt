@@ -1,4 +1,4 @@
-2026-11-26T10:17:54.195104+00:00 Profil administrateur, action iam:GetLoginProfile.
+2026-11-26T10:32:57.322953+00:00 Profil administrateur, action iam:GetLoginProfile.
 Code réel : 254. Statut d'audit : PARTIAL.
 
 aws: [ERROR]: An error occurred (AccessDenied) when calling the GetLoginProfile operation: User: arn:aws:sts::[COMPTE_MASQUÉ]:assumed-role/AccountFullAccessRole/[SESSION_MASQUÉE] is not authorized to perform: iam:GetLoginProfile on resource: user tp2a-dynamo-reader with an explicit deny in a service control policy: [SCP_MASQUÉE] Go to [URL_AVEC_PARAMÈTRES_MASQUÉE] for complete details, or call the GetRequestAuthorizationDetails API with the following authorization id: [IDENTIFIANT_DIAGNOSTIC_MASQUÉ]

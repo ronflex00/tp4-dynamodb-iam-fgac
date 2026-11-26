@@ -1,32 +1,28 @@
 # TP4 EXECUTION REPORT
 
-Exécution terminée jusqu'à l'arrêt demandé avant nettoyage. Voir le [rapport pré-nettoyage complet](rapport-pre-cleanup.md) et la [matrice détaillée](tests.md).
+Exécution TP4 terminée, nettoyage explicitement autorisé et vérifié. Les résultats FGAC ci-dessous décrivent l'état réellement observé avant nettoyage. Voir le [rapport final](rapport-final.md), le [rapport pré-nettoyage historique](rapport-pre-cleanup.md) et la [matrice détaillée](tests.md).
 
-| Contrôle | Résultat observé |
+| Contrôle | Résultat observé avant nettoyage |
 | --- | --- |
-| Table DynamoDB | ACTIVE, conforme, eu-north-1 |
-| Items 001/002 | Exactement deux items fictifs, cinq String ; vérifiés administrateur |
-| Utilisateur IAM | tp2a-dynamo-reader ; aucune managed policy ni groupe ; seule inline TP2AFGAC |
-| Profil reader | STS identité exacte et compte conformes ; une seule clé active |
+| Table DynamoDB | NovaUsersTP2A ACTIVE, conforme, eu-north-1 |
+| Items 001/002 | Exactement deux items fictifs, cinq String chacun, vérifiés administrateur |
+| Utilisateur IAM | tp2a-dynamo-reader ; aucun groupe/managed policy ; une inline TP2AFGAC |
+| Profil reader | STS identité exacte ; une clé technique |
 | Refus initial | I01 EXPECTED DENY, AccessDeniedException, rc=254 |
 | Projection autorisée | A01/A08 et B01 PASS, rc=0 |
 | Attribut sensible refusé | ssn et internal_note refusés en A et B, rc=254 |
 | Lecture complète refusée | A03/B04 EXPECTED DENY, rc=254 |
 | Query | 001 autorisé en A et B ; 002 refusé en B |
-| Scan initial | A05 PASS, exactement deux items ; ALL_ATTRIBUTES refusé en A06 |
+| Scan initial | A05 PASS, deux items ; ALL_ATTRIBUTES refusé en A06 |
 | PutItem refusé | A07/B08 EXPECTED DENY, rc=254 ; Update/Delete également refusés |
-| LeadingKeys 001 | B01/B05 PASS ; seuls les trois attributs approuvés |
-| Accès 002 refusé | B02/B06 EXPECTED DENY, rc=254 |
-| Scan final refusé | B07 EXPECTED DENY, rc=254 |
-| Captures | Douze captures réelles revues ; aucun écran de clé ni capture de nettoyage |
-| Documentation | Compte-rendu, huit réponses, matrice et provenance finalisés |
-| Tests locaux | Dix-huit réussis ; validation JSON/ARN, Markdown et Bash/Fish |
-| Git | Commit local des modifications validées ; aucune publication |
-| Audit secrets | Fichiers privés exclus ; comparaison locale sans affichage et revue des images |
-| Ressources AWS restantes | Table, deux items, lecteur, une clé active et inline LeadingKeys ; sessions et profils locaux conservés |
+| Scan final | B07 EXPECTED DENY, rc=254 |
+| Tests AWS | 23 conformes : 6 PASS, 17 EXPECTED DENY |
+| Nettoyage | C00–C12 PASS ; journal et capture conservés |
+| Tests locaux | 20 réussis hors ligne ; modèles, liens, syntaxe et contrôles validés |
+| Git | Commit local demandé ; aucune publication GitHub |
+| Audit secrets | Contrôle en mémoire pré-suppression ; scan statique final réussi ; `.secrets/` absent |
+| Ressources TP4 restantes | Aucune ; clé, policy, user et table supprimés et absences vérifiées |
 
-**Anomalie connue :** GetLoginProfile reste PARTIAL, car une SCP refuse cette lecture au rôle admin. Aucune SCP ni permission n'a été élargie. Les 23 scénarios DynamoDB sont conformes : six PASS et dix-sept EXPECTED DENY. Les responsables métier et la date de revue restent À VALIDER.
+**Limite d'audit :** GetLoginProfile reste PARTIAL, car une SCP a refusé cette lecture au rôle admin. Aucune SCP ni permission n'a été modifiée. Les responsables métier et la date de revue restent À VALIDER.
 
-**FINAL STATUS : READY_FOR_CLEANUP**
-
-Aucun nettoyage exécuté. Attendre une instruction explicite CLEANUP avant toute suppression. Aucun push GitHub.
+**FINAL STATUS : COMPLETE.** Compte AWS, Builder ID, MFA, `~/.aws` et ressources des autres TP préservés.

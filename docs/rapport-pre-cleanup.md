@@ -1,6 +1,6 @@
 # TP4 PRE-CLEANUP REPORT
 
-État au 26 novembre 2026, région eu-north-1. **READY_FOR_CLEANUP** : les 23 scénarios DynamoDB ont été exécutés et sont conformes, avec 6 PASS (rc=0) et 17 EXPECTED DENY (AccessDeniedException, rc=254). Aucun test reader requis n'est non exécuté ou FAIL. Aucune suppression n'a été lancée.
+État historique au 26 novembre 2026, région eu-north-1, avant nettoyage. Les 23 scénarios DynamoDB étaient conformes, avec 6 PASS (rc=0) et 17 EXPECTED DENY (AccessDeniedException, rc=254). Le nettoyage autorisé a ensuite été exécuté avec succès ; voir [rapport final](rapport-final.md) et [journal C00–C12](../preuves/cleanup.txt).
 
 ## Vérifications finales
 
@@ -57,16 +57,12 @@ Douze captures réelles, numérotées 01 à 12, sont disponibles dans [preuves/]
 
 La [matrice](tests.md) inclut aussi les contrôles administrateur, avec D05 explicitement PARTIAL. Voir [identité reader](../preuves/reader-identity.txt), [policy Attributes](../preuves/policy-attributes.txt), [policy LeadingKeys](../preuves/policy-leadingkeys.txt), [contrôle pré-nettoyage](../preuves/pre-cleanup-check.txt) et [validation locale](../preuves/local-validation.txt).
 
-Dix-huit tests locaux réussis ; modèles et policies privées avec ARN exact validés. Markdown, liens, Bash/Fish, exclusions Git et absence de secrets sont contrôlés avant commit. Le dépôt reste local, sans push. Les valeurs réelles du fichier credentials sont comparées en mémoire aux fichiers suivables sans affichage ; les secrets/caches restent dans .secrets/ ignoré.
+Vingt tests locaux réussis après ajout de deux garde-fous de nettoyage ; modèles et policies privées avec ARN exact validés. Markdown, liens, Bash/Fish, exclusions Git et absence de secrets sont contrôlés avant commit. Le dépôt reste local, sans push. Les valeurs réelles du fichier credentials sont comparées en mémoire aux fichiers suivables sans affichage ; les secrets/caches restent dans .secrets/ ignoré.
 
-## Ressources encore actives
+## Ressources présentes à la date historique du rapport
 
-- Table NovaUsersTP2A, avec les seuls items fictifs 001 et 002.
-- Utilisateur tp2a-dynamo-reader, unique clé active et seule inline TP2AFGAC LeadingKeys.
-- Profils isolés tp2a-admin et tp2a-reader, cache et manifest locaux conservés ; session admin temporaire non terminée par l'agent.
+À la date de ce rapport pré-nettoyage, NovaUsersTP2A, les items fictifs, tp2a-dynamo-reader, sa clé technique et l’inline TP2AFGAC étaient encore présents. Cet état a changé après réception de l’autorisation CLEANUP. Le journal C00–C12 et les vérifications d’absence postérieures sont dans [preuves/cleanup.txt](../preuves/cleanup.txt) et le [rapport final](rapport-final.md).
 
-Compte AWS, Builder ID, MFA et ressources des autres TP préservés. Aucune clé désactivée, aucune policy supprimée, aucune table supprimée et aucun logout exécuté.
+**STATUT DE CE RAPPORT HISTORIQUE : READY_FOR_CLEANUP (avant CLEANUP).**
 
-**FINAL STATUS : READY_FOR_CLEANUP**
-
-Attendre l'instruction explicite **CLEANUP**. Le [script de vérification](../scripts/cleanup-check.sh) ne supprime rien ; le nettoyage définitif reste non autorisé.
+**ÉTAT FINAL : COMPLETE — les ressources TP4 ont été supprimées et leur absence vérifiée.**

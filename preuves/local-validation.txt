@@ -90,3 +90,17 @@ Commande : git diff --check
 Code réel : 0
 
 Contrôle staged : lignes vides finales signalées dans les nouveaux journaux ; fins de fichier normalisées sans changement des résultats ni réponses AWS. Nouveau contrôle staged effectué avant commit.
+
+Validation finale après nettoyage — 2026-11-26
+Commande : python3 -m unittest discover -s scripts -p 'test_*.py' -v
+Code réel : 0 ; 20 tests unitaires réussis, hors ligne. Aucun test AWS déduit.
+
+Commande : python3 scripts/validate-policies.py --templates
+Code réel : 0 ; VALIDATION LOCALE OK — modèles non déployables.
+Le validateur des policies liées à l'ARN n'a pas été relancé : les documents privés et leur manifest ont été retirés avec le dossier .secrets/ après nettoyage autorisé.
+
+Commande : python3 scripts/validate-project.py
+Code réel : 0 ; liens Markdown locaux, JSON, syntaxes Bash/Fish, exclusions Git et 92 fichiers suivables vérifiés. Aucune valeur sensible détectée par les motifs statiques. La comparaison exacte en mémoire entre les valeurs du credentials local et les fichiers suivables avait réussi avant suppression du dossier privé ; aucun secret n'a été affiché.
+
+Empreintes : les 38 éléments de preuves pré-nettoyage correspondent au manifeste ; les 13 PNG sont valides et les 12 originaux restent inchangés.
+Dossier .secrets/ absent après contrôle. Aucun accès AWS exécuté par ces validations.
