@@ -1,0 +1,3 @@
+2026-11-26T09:18:59.373892+00:00 Vérification préalable en lecture seule ; PDF absent, aucune création.
+dynamodb/describe-table : rc=254, erreur=ResourceNotFoundException.
+iam/get-user : rc=254, erreur=NoSuchEntity.

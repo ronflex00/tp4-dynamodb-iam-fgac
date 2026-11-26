@@ -1,0 +1,33 @@
+Validation LOCALE uniquement — aucune preuve FGAC AWS.
+Date UTC : 2026-11-26T09:22:07.745646+00:00
+
+Commande : python3 scripts/validate-policies.py --templates
+Code réel : 0
+VALIDATION LOCALE OK — modèles non déployables
+
+Commande : python3 -m unittest discover -s scripts -p test_*.py -v
+Code réel : 0
+test_absent_requires_exact_error (test_lab.SafetyTests.test_absent_requires_exact_error) ... ok
+test_cleanup_without_authorization_does_not_call_aws (test_lab.SafetyTests.test_cleanup_without_authorization_does_not_call_aws) ... ok
+test_exact_projection_success (test_lab.SafetyTests.test_exact_projection_success) ... ok
+test_isolation_removes_inherited_credentials (test_lab.SafetyTests.test_isolation_removes_inherited_credentials) ... ok
+test_missing_credentials_is_failure (test_lab.SafetyTests.test_missing_credentials_is_failure) ... ok
+test_missing_pdf_stops_before_aws (test_lab.SafetyTests.test_missing_pdf_stops_before_aws) ... ok
+test_no_cli_query_filter (test_lab.SafetyTests.test_no_cli_query_filter) ... ok
+test_policy_rejects_broadening (test_lab.SafetyTests.test_policy_rejects_broadening) ... ok
+test_real_denial_classification (test_lab.SafetyTests.test_real_denial_classification) ... ok
+test_redaction (test_lab.SafetyTests.test_redaction) ... ok
+test_returned_secret_or_wrong_item_fails (test_lab.SafetyTests.test_returned_secret_or_wrong_item_fails) ... ok
+test_scan_must_contain_two_exact_items (test_lab.SafetyTests.test_scan_must_contain_two_exact_items) ... ok
+test_template_cannot_be_deployed (test_lab.SafetyTests.test_template_cannot_be_deployed) ... ok
+test_unrelated_access_denied_is_failure (test_lab.SafetyTests.test_unrelated_access_denied_is_failure) ... ok
+test_validation_or_conditional_failure_is_not_deny (test_lab.SafetyTests.test_validation_or_conditional_failure_is_not_deny) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.002s
+
+OK
+
+Commande : python3 scripts/validate-project.py
+Code réel : 0
+CONTRÔLES LOCAUX OK — Markdown analysé, liens, JSON, Bash/Fish, exclusions et 28 fichiers suivables audités. Les images exigent une revue visuelle. Aucun test AWS effectué par ce contrôle.
