@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Orchestration TP4 par AWS CLI, bibliothèque standard Python uniquement."""
 import argparse
-import copy
 import datetime as dt
 import hashlib
 import importlib.util
@@ -286,7 +285,7 @@ def arguments(action, key, projection):
     if projection == "ALL_ATTRIBUTES":
         args += ["--select", "ALL_ATTRIBUTES"]
     if action == "put-item":
-        args += ["--item", json.dumps({"id": {"S": "999"}, "username": {"S": "test-write"}}),
+        args += ["--item", json.dumps({"id": {"S": "999"}, "username": {"S": "test-refus"}}),
                  "--condition-expression", "attribute_not_exists(id)"]
     if action == "update-item":
         # Si une permission inattendue existe, aucune modification : condition toujours fausse
@@ -382,11 +381,11 @@ def run_tests(phase):
             guard(manifest)
             table(manifest)
             accidental = admin("dynamodb", "get-item", "--table-name", TABLE, "--key", key_json("999"), "--consistent-read").get("Item")
-            expected = {"id": {"S": "999"}, "username": {"S": "test-write"}}
+            expected = {"id": {"S": "999"}, "username": {"S": "test-refus"}}
             require(accidental == expected, "STOP FAIL : item 999 inattendu ; aucune suppression")
             admin("dynamodb", "delete-item", "--table-name", TABLE, "--key", key_json("999"),
                   "--condition-expression", "#u = :u AND attribute_exists(id)", "--expression-attribute-names", '{"#u":"username"}',
-                  "--expression-attribute-values", '{":u":{"S":"test-write"}}')
+                  "--expression-attribute-values", '{":u":{"S":"test-refus"}}')
             require(not admin("dynamodb", "get-item", "--table-name", TABLE, "--key", key_json("999"), "--consistent-read").get("Item"), "Item 999 encore présent")
             proof("incident-999.txt", f"{now()} FAIL PutItem inattendu ; item 999 vérifié, supprimé par admin et absence observée.\n")
             raise Stop("STOP FAIL : PutItem a réussi ; seul l'item 999 de test a été retiré après vérification")

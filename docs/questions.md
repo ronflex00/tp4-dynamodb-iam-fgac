@@ -1,6 +1,6 @@
 # Réponses aux huit questions fournies
 
-Ces huit formulations proviennent de votre demande. Leur correspondance avec les questions exactes du professeur reste à vérifier à réception du PDF.
+Les huit questions ont été rapprochées de la page 10 du PDF officiel, lu le 26 novembre 2026. Elles correspondent aux formulations de votre demande. Les réponses expliquent les comportements attendus ; les tests reader restent à exécuter.
 
 ## 1. Pourquoi FGAC ne masque pas une lecture complète ?
 

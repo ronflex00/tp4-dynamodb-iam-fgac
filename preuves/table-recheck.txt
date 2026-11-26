@@ -1,0 +1,4 @@
+2026-11-26T09:45:52.001222+00:00 Compte et principal STS conformes au manifest. Région eu-north-1.
+ListTables rc=0 ; présence du nom exact : False.
+DescribeTable rc=254, erreur=ResourceNotFoundException.
+Aucune création, insertion ou modification exécutée. La déclaration utilisateur ACTIVE est distincte de cette observation CLI.

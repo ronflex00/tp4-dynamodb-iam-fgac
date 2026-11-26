@@ -1,0 +1,4 @@
+2026-11-26T09:35:37.177443+00:00 STS non-root vérifié. Région eu-north-1.
+Table NovaUsersTP2A : ResourceNotFoundException.
+Utilisateur tp2a-dynamo-reader : NoSuchEntity.
+Aucune ressource créée.

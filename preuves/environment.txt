@@ -1,2 +1,2 @@
-2026-11-26T09:21:48.513784+00:00 STS tp2a-admin rc=0 ; compte et ARN vérifiés, masqués dans cette preuve.
+2026-11-26T09:35:02.046477+00:00 STS tp2a-admin rc=0 ; compte et ARN vérifiés, masqués dans cette preuve.
 Identité autre que root. Région : eu-north-1

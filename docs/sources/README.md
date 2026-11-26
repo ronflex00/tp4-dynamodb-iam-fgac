@@ -1,29 +1,38 @@
 # Sources et traçabilité
 
-## Sujet officiel manquant
+## Sujet officiel lu
 
-Emplacement attendu : `docs/sources/TP4 - Limiter les données DynamoDB avec IAM FGAC.pdf`.
+Le document [TP4 - Limiter les données DynamoDB avec IAM FGAC.pdf](<TP4 - Limiter les données DynamoDB avec IAM FGAC.pdf>) a été copié depuis le fichier fourni dans `/home/gatta/Téléchargements/`, puis lu intégralement le **26 novembre 2026**. `pdfinfo` confirme **10 pages**. `pdftotext -layout` a permis la lecture du texte, des items et du JSON, sans OCR ni envoi à un service externe.
 
-Nombre de pages annoncé : 10. **Le PDF n'est pas présent lors de la préparation du 26 novembre 2026.** Il faut le copier ici. Aucun contenu ou exigence du professeur n'a été reconstitué à sa place.
+Empreinte SHA256 : `a1d59c555cdb8b04ef6f228a91cd2bd57523b5968efcaa78be5b46e76a56e53c`.
 
-Après réception : lire intégralement le document avec un lecteur PDF ou `pdftotext -layout`, comparer les noms, les scénarios, les huit questions et la première policy avec les préparatifs. Signaler et corriger tout écart avant création. L'extraction de texte numérique ne demande pas de service OCR ni d'envoi vers AWS.
+La même empreinte est conservée dans `.secrets/source-reviewed.sha256`. Ce marqueur atteste la lecture opérateur et identifie le document ; il ne remplace ni les tests AWS ni une validation métier.
 
-Consigner ensuite ici : date de lecture, nombre de pages, empreinte SHA256 et écarts éventuels. La lecture et ce rapprochement restent **À FAIRE**. Une fois réellement effectués, enregistrer l'empreinte privée pour débloquer les scripts :
+## Conformité et origine des exigences
 
-```bash
-python3 - <<'PY'
-import hashlib
-from pathlib import Path
-pdf = Path('docs/sources/TP4 - Limiter les données DynamoDB avec IAM FGAC.pdf')
-Path('.secrets/source-reviewed.sha256').write_text(hashlib.sha256(pdf.read_bytes()).hexdigest() + '\n')
-PY
-```
+| Élément | Source PDF | Vérification / décision |
+| --- | --- | --- |
+| Free plan, crédits, région, MFA, aucune clé admin | Pages 2–3 | Paramètres déclarés par l'utilisateur ; identité non-root et région revérifiées en CLI. Crédits et console Settings non relus par l'agent. |
+| Création table et items en console, vérification CLI | Pages 1, 3–4 | Table déclarée créée en console par l'utilisateur, mais non retrouvée en CLI ; l'utilisateur autorise ensuite l'insertion automatique des items avec tp2a-admin. |
+| Noms, clé id String, Standard, On-demand, aucun ajout | Pages 3–4 | Identiques aux préparatifs ; absence des ressources observée avant toute création. |
+| Deux items et leurs cinq attributs String | Page 4 | Valeurs exactes confirmées ; id 001/002 reste une chaîne. |
+| Reader sans accès console ni permissions ; une clé CLI | Pages 4–5 | Création CLI autorisée dans la demande ; création/configuration de la clé exclusivement humaine. |
+| Première inline policy TP2AFGAC | Pages 5–6 | Actions, ARN, Attributes, Select et Null conformes ; Sid aligné sur ReadPublicAttributes. |
+| Projection valide, ssn interdit, absence de projection | Pages 6–7 | Scénarios A01–A03 conformes ; seuls les résultats AWS alimenteront la matrice. |
+| Query, Scan projeté, Scan ALL_ATTRIBUTES, PutItem 999 | Page 8 | Scénarios A04–A07 conformes ; username du test 999 aligné sur test-refus. Condition anti-écrasement complémentaire. |
+| Deux versions JSON et restriction au dossier 001 | Pages 1, 9–10 | Le PDF demande la restriction et deux JSON, mais ne fournit pas le second JSON ni le protocole détaillé de transition. |
+| Huit questions | Page 10 | Correspondent aux huit réponses préparées. |
+| Nettoyage console puis confirmation CLI | Page 9 | Documenté ; pas d'exécution sans instruction CLEANUP de l'utilisateur. |
 
-Ce marqueur est une attestation opérateur de lecture, pas une preuve automatique de conformité pédagogique.
+Les modèles versionnés anonymisent le numéro de compte. `preflight` a produit les JSON privés avec l'ARN exact ; leur validation locale a réussi. Les alias d'attributs des scripts désignent les mêmes noms réels que dans le PDF.
 
-## Consignes reçues
+## Compléments techniques et instructions de l'utilisateur
 
-Le texte fourni dans la conversation demande l'ensemble de l'arborescence, les deux policies, les tests, la gouvernance, l'isolement des secrets et l'arrêt avant nettoyage. Ces éléments sont préparés. Le texte annonce que la première policy vient du PDF : cela reste à comparer. La seconde policy `LeadingKeys`, l'exclusion de Scan, les contrôles supplémentaires et les marqueurs d'appartenance constituent la solution technique complémentaire.
+- **Demande utilisateur :** conserver ce dossier TP4 et les scripts Fish/Bash, produire des preuves expurgées et des commits locaux, arrêter avant le nettoyage jusqu'à réception de `CLEANUP`. Le dossier d'exemple `tp2a-fgac` du PDF n'est pas créé.
+- **Autorisation reçue après création console :** effectuer automatiquement les opérations possibles avec tp2a-admin, notamment insérer les deux items. `seed` et `create-reader` sont des variantes CLI de la méthode console du professeur, autorisées par cette demande. La méthode réellement utilisée sera consignée dans le compte-rendu.
+- **Construction complémentaire :** deuxième policy avec LeadingKeys 001, Null sur Attributes et LeadingKeys, GetItem/Query uniquement, remplacement de la même inline policy. L'objectif est explicite dans le PDF ; cette implémentation détaillée s'appuie sur AWS.
+- **Contrôles complémentaires :** refus internal_note, UpdateItem et DeleteItem, lecture 002 à l'étape A, audit des permissions parallèles, tag TP4LabId et identifiants uniques de ressources. Ils ne sont pas présentés comme imposés par le professeur.
+- **Nettoyage :** le script CLI reste une variante automatisée de la procédure console du PDF. Aucune exécution n'est actuellement autorisée.
 
 ## Documentation primaire consultée le 26 novembre 2026
 

@@ -2,11 +2,11 @@
 
 Module : Gouvernance des identités et des habilitations. Entreprise du cas : Nova Services. Formateur indiqué : Mohammad Jabbari. Préparation : 26 novembre 2026, Europe/Paris.
 
-**État : PARTIAL.** La préparation locale et les vérifications de connexion ont été effectuées. Aucun test de droit DynamoDB ni aucune capture de ces tests n'a été réalisé. Les exigences explicites du professeur ne peuvent pas être attestées : le PDF de dix pages manque. Les sections ci-dessous présentent le protocole demandé et les observations disponibles.
+**État : PARTIAL.** Le PDF officiel de dix pages a été lu et rapproché des préparatifs. STS, la région et l'absence initiale des ressources ont été revérifiés. Après une déclaration utilisateur de table ACTIVE, les lectures AWS CLI constatent pourtant zéro table dans le compte vérifié en eu-north-1. Cet écart doit être résolu avant toute écriture. Aucun test reader ni capture de ces tests n'a été réalisé.
 
 ## 1. Contexte
 
-Le support doit consulter des données utiles à l'assistance tout en excluant les attributs confidentiels. Le TP3 est annoncé terminé et nettoyé par l'utilisateur ; aucune ressource TP3 n'a été modifiée. La demande fournie définit les préparatifs. Le sujet officiel attendu est documenté dans [les sources](docs/sources/README.md).
+Le support doit consulter des données utiles à l'assistance tout en excluant les attributs confidentiels. Le TP3 est annoncé terminé et nettoyé par l'utilisateur ; aucune ressource TP3 n'a été modifiée. Le [sujet officiel et sa provenance](docs/sources/README.md) distinguent les exigences du professeur des compléments et autorisations utilisateur.
 
 ## 2. Objectif FGAC
 
@@ -28,7 +28,9 @@ La première tentative STS isolée a réellement échoué avec rc=253 (NoCredent
 
 Nom visé : NovaUsersTP2A ; clé `id` String, aucune sort key, Standard, On-demand, aucun index, Stream, réplication ou sauvegarde supplémentaire. Création en console prévue conformément à la demande. Deux items fictifs exacts décrits dans le [README](README.md).
 
-Observation préalable : DescribeTable a renvoyé ResourceNotFoundException, rc=254 ; la table était absente lors de la vérification en lecture seule. Cette vérification sera renouvelée avant création. Aucune table créée. Voir [preuve de pré-vérification](preuves/preflight-readonly.txt).
+Observation préalable : DescribeTable a renvoyé ResourceNotFoundException, rc=254 ; la table était absente lors de la préparation. Le préflight a renouvelé ce constat après lecture du PDF et conservé l'appartenance dans le manifest privé. Voir [preuve du préflight](preuves/preflight.txt).
+
+L'utilisateur a ensuite annoncé la création console avec état ACTIVE et autorisé les opérations automatiques admin, dont l'insertion des items. Deux DescribeTable du profil vérifié répondent cependant ResourceNotFoundException (rc=254) et ListTables retourne zéro table (rc=0). La déclaration console et l'observation CLI restent distinctes. Ni table ni item n'ont été créés par l'agent ; aucune recréation n'a été tentée. Voir [diagnostic réel](preuves/table-recheck.txt). Compte, région et nom doivent être rapprochés avant reprise.
 
 ## 6. Identité IAM
 
@@ -40,7 +42,7 @@ Protocole I01 : GetItem 001 avec projection approuvée, profil reader sans permi
 
 ## 8. Policy Attributes
 
-[Modèle JSON](policies/fgac-attributes.json) préparé selon votre texte, à comparer au PDF. GetItem, Query, Scan, liste d'attributs `id`, `username`, `email`, Select spécifique lorsque présent et contrôle Null. L'ARN exact sera obtenu du compte vérifié et conservé dans le JSON privé `.secrets/policies/`. Le modèle versionné n'est pas déployable. Installation non effectuée.
+[Modèle JSON](policies/fgac-attributes.json) comparé aux pages 5–6 du PDF : GetItem, Query, Scan, attributs `id`, `username`, `email`, Select spécifique lorsque présent et contrôle Null conformes. Le Sid a été aligné sur ReadPublicAttributes. Les deux JSON privés `.secrets/policies/` ont été générés avec l'ARN du compte vérifié, puis validés localement. Le modèle versionné reste anonymisé et non déployable. Installation non effectuée.
 
 ## 9. Projection autorisée
 
@@ -48,7 +50,7 @@ A01 et A08 doivent retourner respectivement les trois attributs approuvés de 00
 
 ## 10. Attribut sensible interdit
 
-A02/B03 demandent id et ssn ; A09/B09 demandent id et internal_note. Le refus attendu porte sur toute la requête. Observé : NOT TESTED. Les tests complémentaires internal_note sont issus de votre objectif et ne sont pas attribués au professeur sans lecture du PDF.
+A02/B03 demandent id et ssn ; A09/B09 demandent id et internal_note. Le refus attendu porte sur toute la requête. Observé : NOT TESTED. Le PDF prévoit de protéger les notes internes, mais ne détaille pas ce test supplémentaire ; A09/B09 sont identifiés comme contrôles complémentaires.
 
 ## 11. Lecture sans projection refusée
 
@@ -66,7 +68,7 @@ UpdateItem et DeleteItem sont aussi testés avec une condition fausse sur l'item
 
 ## 14. Policy LeadingKeys
 
-[Modèle complémentaire](policies/fgac-leadingkeys.json) : GetItem/Query seulement, attributs approuvés, LeadingKeys exactement `001`, contrôle de présence pour les deux clés de condition. Scan retiré. Solution fondée sur la [documentation AWS FGAC](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/specifying-conditions.html) ; exigences exactes du PDF non vérifiées. Aucune policy attachée.
+[Modèle complémentaire](policies/fgac-leadingkeys.json) : GetItem/Query seulement, attributs approuvés, LeadingKeys exactement `001`, contrôle de présence pour les deux clés de condition. Scan retiré. L'objectif 001 et les deux livrables JSON figurent dans le PDF ; le second JSON n'y est pas fourni. Cette construction détaillée suit la [documentation AWS FGAC](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/specifying-conditions.html). Aucune policy attachée.
 
 ## 15. Restriction au dossier 001
 
@@ -99,6 +101,6 @@ Aucune validation formelle, personne responsable ou date de revue n'a été inve
 
 ## 19. Conclusion
 
-Préparation locale effectuée, connexion temporaire et identité non-root vérifiées, table et utilisateur absents lors du contrôle préalable. Le PDF est indispensable pour poursuivre la réalisation conforme au sujet. La création en console et la clé reader sont des étapes humaines prévues. Aucun test FGAC n'est déclaré réussi, aucune capture fictive créée, aucun nettoyage exécuté. Statut du TP : **PARTIAL**.
+Le PDF a été lu et les préparatifs rapprochés du sujet ; les huit réponses correspondent à la page 10. L'identité non-root et la région sont vérifiées ; les policies privées sont liées à l'ARN réel et validées localement. La table annoncée ACTIVE n'est pas retrouvée par CLI dans ce compte/région. Il faut résoudre cet écart avant l'insertion automatique autorisée par l'utilisateur, puis créer le reader et attendre sa clé manuelle. Aucun test FGAC n'est déclaré réussi, aucune capture fictive créée et aucun nettoyage exécuté. Statut du TP : **PARTIAL**.
 
 Validation locale observée : deux modèles JSON conformes au validateur structurel, quinze tests unitaires réussis, syntaxe Bash/Fish et environnements sourcés vérifiés, Markdown analysé et liens locaux contrôlés, audit des fichiers suivables sans secret détecté. Les fichiers de profil ont les permissions 600, les répertoires privés 700. Voir le [journal de validation locale](preuves/local-validation.txt). Les commits sont locaux, sans publication.

@@ -2,7 +2,7 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "ReadApprovedAttributes",
+      "Sid": "ReadPublicAttributes",
       "Effect": "Allow",
       "Action": ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"],
       "Resource": "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/NovaUsersTP2A",

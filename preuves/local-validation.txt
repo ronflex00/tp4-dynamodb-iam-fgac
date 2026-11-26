@@ -31,3 +31,21 @@ OK
 Commande : python3 scripts/validate-project.py
 Code réel : 0
 CONTRÔLES LOCAUX OK — Markdown analysé, liens, JSON, Bash/Fish, exclusions et 28 fichiers suivables audités. Les images exigent une revue visuelle. Aucun test AWS effectué par ce contrôle.
+
+Reprise après lecture du PDF — 2026-11-26T09:47:57.521429+00:00
+Quinze tests unitaires relancés après alignement au PDF : tous réussis, code 0 (contrôle hors ligne).
+
+Commande : python3 scripts/validate-policies.py --templates
+Code réel : 0
+VALIDATION LOCALE OK — modèles non déployables
+
+Commande : python3 scripts/validate-policies.py
+Code réel : 0
+VALIDATION LOCALE OK — ARN lié
+
+Commande : python3 scripts/validate-project.py
+Code réel : 0
+CONTRÔLES LOCAUX OK — Markdown analysé, liens, JSON, Bash/Fish, exclusions et 32 fichiers suivables audités. Les images exigent une revue visuelle. Aucun test AWS effectué par ce contrôle.
+
+Commande : git diff --check
+Code réel : 0

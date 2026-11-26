@@ -2,13 +2,13 @@
 
 Nova Services · Gouvernance des identités et des habilitations · Formateur indiqué : Mohammad Jabbari.
 
-**État : PARTIAL — préparation locale réalisée, PDF absent, tests DynamoDB non exécutés.** La connexion `tp2a-admin` et la vérification STS ont réussi le 26 novembre 2026. Aucun résultat IAM DynamoDB n'est anticipé. Aucune ressource AWS n'a été créée par cette préparation. Aucun nettoyage n'a été lancé.
+**État : PARTIAL — PDF lu, identité AWS revérifiée, écart console/CLI à résoudre.** L'utilisateur indique la table ACTIVE, mais deux lectures DescribeTable répondent ResourceNotFoundException et ListTables retourne zéro table dans le compte du profil isolé en eu-north-1. Aucun item ni utilisateur n'a été créé par l'agent ; aucun test reader ni nettoyage lancé.
 
 ## Source et périmètre
 
-La demande fournie sert aux préparatifs. Le sujet officiel reste à copier dans [docs/sources/](docs/sources/README.md) sous le nom `TP4 - Limiter les données DynamoDB avec IAM FGAC.pdf` (10 pages). Les exigences du professeur sont **non vérifiées** tant que ce PDF n'a pas été lu. La première policy est le modèle demandé dans votre texte, à comparer au PDF. La seconde est une solution technique complémentaire documentée avec les sources AWS.
+Le [sujet officiel et le rapprochement détaillé](docs/sources/README.md) ont été lus : dix pages, mêmes noms, données, première policy et huit questions. Le Sid initial a été aligné sur ReadPublicAttributes. Le PDF demande la création de la table et des deux items en console ; après avoir annoncé la table créée en console, l'utilisateur a explicitement autorisé l'insertion automatique des items avec tp2a-admin. Cette variante sera distinguée de la méthode du professeur. Le PDF demande deux versions JSON mais fournit seulement la première ; la seconde est une construction technique complémentaire.
 
-Les JSON versionnés contiennent `REGION` et `ACCOUNT_ID` : **modèles non déployables**. `preflight` fabrique les deux JSON avec l'ARN exact vérifié, uniquement dans `.secrets/policies/`, pour ne pas publier l'identifiant de compte. Une validation locale ne constitue pas un test AWS.
+Les JSON versionnés contiennent `REGION` et `ACCOUNT_ID` : **modèles non déployables**. Les deux JSON avec l'ARN exact vérifié sont maintenant disponibles uniquement dans `.secrets/policies/`, pour ne pas publier l'identifiant de compte. Leur validation locale a réussi ; elle ne constitue pas un test AWS.
 
 ## Environnement isolé
 
@@ -35,13 +35,19 @@ Paramètres confirmés par l'utilisateur le 26 novembre 2026 à partir du TP3 : 
 
 Le profil admin utilise `aws login` avec des identifiants temporaires, aucune clé admin permanente. Région et sortie JSON ont été configurées dans le seul fichier isolé. Après expiration, Codex peut relancer `aws login --profile tp2a-admin` dans cet environnement et attendre l'intervention navigateur ; ne pas partager l'URL d'autorisation ni son code. STS refuse root dans les scripts.
 
-## Déroulement après réception du sujet
+## Étape actuelle
 
-1. Lire les dix pages, rapprocher les exigences, compléter [la provenance](docs/sources/README.md) et consigner l'empreinte du PDF comme indiqué dans ce document. Aucun script ne considère la simple présence du PDF comme une lecture.
-2. Exécuter `python3 scripts/lab.py preflight`. Cette commande vérifie l'identité, la région, l'absence exacte de la table et de l'utilisateur. Si une ressource existe ou qu'une API est refusée : arrêt et inspection, aucun écrasement. Le manifest privé conserve compte, principal, ARN et marqueur d'appartenance. La vérification en lecture seule déjà faite doit être renouvelée à cette étape.
-3. Créer la table **dans la console AWS** : DynamoDB → Tables → Create table. Nom `NovaUsersTP2A`, partition `id` String, aucune sort key, Standard, On-demand, aucun index, Stream, réplication ou sauvegarde supplémentaire. Ajouter le tag `TP4LabId` avec la valeur affichée par `preflight`. Attendre `ACTIVE`. Le tag est un garde-fou technique complémentaire à votre demande.
-4. Exécuter `python3 scripts/lab.py register-table`, puis `python3 scripts/lab.py seed` et `bash scripts/verify-table.sh`. Le script vérifie aussi l'absence de policy de ressource, conserve le TableId, insère seulement les deux items fictifs manquants et ne remplace jamais un item existant. Inspecter en console l'absence de sauvegarde supplémentaire.
-5. Exécuter `python3 scripts/lab.py create-reader`. L'utilisateur exact `tp2a-dynamo-reader` reçoit un marqueur d'appartenance, aucune permission, aucun groupe, aucune clé et aucun login console.
+Le PDF a été lu, l'identité non-root et la région ont été revérifiées, et le préflight a enregistré l'absence initiale des ressources. Le manifest privé existe ; **ne pas relancer preflight ni effacer le manifest**. La console a été ouverte dans le navigateur local, mais aucun outil connecté ne permet de piloter cette session Chrome ; aucun cookie ni token du navigateur n'a été extrait.
+
+L'utilisateur a ensuite indiqué que NovaUsersTP2A était ACTIVE. La vérification CLI retrouve pourtant zéro table en eu-north-1 dans le compte du manifest. Il faut rapprocher le compte, la région et le nom affichés en console avant de créer ou modifier quoi que ce soit. Voir [le diagnostic](preuves/table-recheck.txt) et [le rapport d'exécution](docs/rapport-execution.md). Un ResourceNotFoundException ne constitue pas un test de refus IAM du lecteur.
+
+## Déroulement du laboratoire
+
+1. **Effectué :** dix pages lues, exigences rapprochées et empreinte consignée. Aucun script ne considère la simple présence du PDF comme une lecture.
+2. **Effectué :** `python3 scripts/lab.py preflight` a vérifié l'identité, la région et l'absence exacte des ressources. Le manifest privé conserve compte, principal, ARN et marqueur d'appartenance. Toute ressource apparaissant ensuite doit être inspectée et reconnue avant reprise.
+3. Créer la table **dans la console AWS** : DynamoDB → Tables → Create table. Nom `NovaUsersTP2A`, partition `id` String, aucune sort key, Standard, On-demand, aucun index, Stream, réplication ou sauvegarde supplémentaire. Tag complémentaire `TP4LabId = bc8dba3dfb640383b620f69b`. Attendre ACTIVE. Création annoncée par l'utilisateur mais pas encore retrouvée par CLI : ne pas recréer sans résoudre cet écart.
+4. Une fois la table réelle vérifiée et reconnue, exécuter `python3 scripts/lab.py register-table`, puis `python3 scripts/lab.py seed` et `bash scripts/verify-table.sh`. L'insertion CLI a été expressément autorisée par l'utilisateur en variante du parcours console. Le script ne remplace jamais un item existant. Les contrôles inspectent aussi policy de ressource, sauvegardes et PITR, et conservent le TableId. Ces commandes ne sont pas encore exécutées.
+5. Ensuite `python3 scripts/lab.py create-reader` crée l'utilisateur exact `tp2a-dynamo-reader` sans permission, groupe, clé ni login console, avec un marqueur d'appartenance. Cette variante CLI du parcours IAM console est autorisée par la demande d'automatisation.
 6. **Étape humaine :** IAM → Users → tp2a-dynamo-reader → Security credentials → Access keys → Create access key → CLI. Créer une seule clé. Dans votre terminal personnel, hors de Codex, après avoir sourcé le script Fish, saisir `aws configure --profile tp2a-reader` ; région `eu-north-1`, sortie `json`. Saisir directement les secrets au prompt. Ne jamais les coller dans la conversation, une commande, une capture ou Git. Appliquer `chmod 600 .secrets/config .secrets/credentials`. STS sera contrôlé par la suite initiale, sans exposer son ARN complet.
 7. Exécuter `python3 scripts/lab.py test-initial` : seul un véritable AccessDenied du GetItem projeté est accepté. STS n'atteste pas les droits DynamoDB.
 8. Exécuter `python3 scripts/lab.py apply-attributes`. La seule inline policy `TP2AFGAC` est installée. Attendre la propagation IAM (par exemple 30 secondes), puis `bash scripts/test-attributes.sh`. Tout échec arrête la suite et reste FAIL. Une relance remplace la dernière matrice de cette phase ; conserver ailleurs une copie expurgée si l'historique de propagation est utile.
