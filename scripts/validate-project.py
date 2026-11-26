@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Contrôles locaux Markdown, scripts et absence de secrets dans Git."""
+import configparser
 import json
 import re
 import subprocess
@@ -50,12 +51,26 @@ patterns = [
     re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     re.compile(rb"(?im)^\s*(?:aws_secret_access_key|aws_session_token|aws_access_key_id)\s*=\s*\S+"),
 ]
+known_secrets = []
+credentials = ROOT / ".secrets/credentials"
+if credentials.is_file():
+    private_config = configparser.RawConfigParser()
+    try:
+        private_config.read(credentials)
+        for section in private_config.sections():
+            for key in ("aws_access_key_id", "aws_secret_access_key", "aws_session_token"):
+                value = private_config.get(section, key, fallback="").strip()
+                if value:
+                    known_secrets.append(value.encode())
+    except configparser.Error:
+        check(False, "Fichier credentials non analysable ; contenu jamais affiché")
 for name in paths:
     path = ROOT / name
     check(not name.startswith((".secrets/", "downloads/", ".aws/")) and path.suffix != ".csv", f"Fichier privé suivable : {name}")
     if path.is_file():
         content = path.read_bytes()
         check(not any(pattern.search(content) for pattern in patterns), f"Secret ou identifiant de compte potentiel : {name} (valeur non affichée)")
+        check(not any(secret in content for secret in known_secrets), f"Secret local présent dans un fichier suivable : {name} (valeur non affichée)")
 
 for required in (".secrets/config", ".secrets/credentials", "downloads/test.txt", "example.csv", ".env", ".env.local", "node_modules/x", "__pycache__/x", "playwright-report/x", "test-results/x"):
     result = subprocess.run(["git", "check-ignore", "-q", "--no-index", required], cwd=ROOT)

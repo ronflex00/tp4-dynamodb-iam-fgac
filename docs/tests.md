@@ -9,29 +9,31 @@ Résultats AWS uniquement. `NOT TESTED` signifie aucune observation. Les tests l
 | D03 | tp2a-admin | GetItem consistent-read | 002 | complète | item fictif exact, cinq String | rc=0, valeurs exactes vérifiées | PASS | [Preuve](../preuves/02-items.png) |
 | D04 | tp2a-admin | GetUser + listes IAM initiales | — | métadonnées | lecteur sans groupe, policy ni clé initiale | rc=0, UserId conforme et listes vides à la création | PASS | [Preuve](../preuves/reader-created.txt) |
 | D05 | tp2a-admin | GetLoginProfile | — | métadonnées | NoSuchEntity pour confirmer absence de login | rc=254, AccessDenied explicite par SCP | PARTIAL | [Preuve](../preuves/audit-login-profile.txt) |
-| I01 (initial) | tp2a-reader | get-item | 001 | allowed | AccessDenied | Non exécuté | NOT TESTED | — |
-| A01 (attributes) | tp2a-reader | get-item | 001 | allowed | SUCCESS | Non exécuté | NOT TESTED | — |
-| A02 (attributes) | tp2a-reader | get-item | 001 | ssn | AccessDenied | Non exécuté | NOT TESTED | — |
-| A03 (attributes) | tp2a-reader | get-item | 001 | absente | AccessDenied | Non exécuté | NOT TESTED | — |
-| A04 (attributes) | tp2a-reader | query | 001 | allowed | SUCCESS | Non exécuté | NOT TESTED | — |
-| A05 (attributes) | tp2a-reader | scan | — | allowed | SUCCESS | Non exécuté | NOT TESTED | — |
-| A06 (attributes) | tp2a-reader | scan | — | ALL_ATTRIBUTES | AccessDenied | Non exécuté | NOT TESTED | — |
-| A07 (attributes) | tp2a-reader | put-item | 999 | absente | AccessDenied | Non exécuté | NOT TESTED | — |
-| A08 (attributes) | tp2a-reader | get-item | 002 | allowed | SUCCESS | Non exécuté | NOT TESTED | — |
-| A09 (attributes) | tp2a-reader | get-item | 001 | internal_note | AccessDenied | Non exécuté | NOT TESTED | — |
-| A10 (attributes) | tp2a-reader | update-item | 001 | absente | AccessDenied | Non exécuté | NOT TESTED | — |
-| A11 (attributes) | tp2a-reader | delete-item | 001 | absente | AccessDenied | Non exécuté | NOT TESTED | — |
-| B01 (leadingkeys) | tp2a-reader | get-item | 001 | allowed | SUCCESS | Non exécuté | NOT TESTED | — |
-| B02 (leadingkeys) | tp2a-reader | get-item | 002 | allowed | AccessDenied | Non exécuté | NOT TESTED | — |
-| B03 (leadingkeys) | tp2a-reader | get-item | 001 | ssn | AccessDenied | Non exécuté | NOT TESTED | — |
-| B04 (leadingkeys) | tp2a-reader | get-item | 001 | absente | AccessDenied | Non exécuté | NOT TESTED | — |
-| B05 (leadingkeys) | tp2a-reader | query | 001 | allowed | SUCCESS | Non exécuté | NOT TESTED | — |
-| B06 (leadingkeys) | tp2a-reader | query | 002 | allowed | AccessDenied | Non exécuté | NOT TESTED | — |
-| B07 (leadingkeys) | tp2a-reader | scan | — | allowed | AccessDenied | Non exécuté | NOT TESTED | — |
-| B08 (leadingkeys) | tp2a-reader | put-item | 999 | absente | AccessDenied | Non exécuté | NOT TESTED | — |
-| B09 (leadingkeys) | tp2a-reader | get-item | 001 | internal_note | AccessDenied | Non exécuté | NOT TESTED | — |
-| B10 (leadingkeys) | tp2a-reader | update-item | 001 | absente | AccessDenied | Non exécuté | NOT TESTED | — |
-| B11 (leadingkeys) | tp2a-reader | delete-item | 001 | absente | AccessDenied | Non exécuté | NOT TESTED | — |
+| D06 | tp2a-reader | GetCallerIdentity | — | métadonnées | identité exacte du reader, même compte | rc=0, ARN exact et compte conformes | PASS | [Preuve](../preuves/reader-identity.txt) |
+| D07 | tp2a-admin | Audit final policy, groupes et clé | — | métadonnées | seule TP2AFGAC LeadingKeys et une clé active | rc=0, inline exacte ; aucun groupe/managed policy ; une clé active | PASS | [Preuve](../preuves/pre-cleanup-check.txt) |
+| I01 (initial) | tp2a-reader | get-item | 001 | allowed | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/I01.txt) |
+| A01 (attributes) | tp2a-reader | get-item | 001 | allowed | SUCCESS | rc=0, SUCCESS | PASS | [Journal](../preuves/A01.txt) |
+| A02 (attributes) | tp2a-reader | get-item | 001 | ssn | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/A02.txt) |
+| A03 (attributes) | tp2a-reader | get-item | 001 | absente | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/A03.txt) |
+| A04 (attributes) | tp2a-reader | query | 001 | allowed | SUCCESS | rc=0, SUCCESS | PASS | [Journal](../preuves/A04.txt) |
+| A05 (attributes) | tp2a-reader | scan | — | allowed | SUCCESS | rc=0, SUCCESS | PASS | [Journal](../preuves/A05.txt) |
+| A06 (attributes) | tp2a-reader | scan | — | ALL_ATTRIBUTES | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/A06.txt) |
+| A07 (attributes) | tp2a-reader | put-item | 999 | absente | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/A07.txt) |
+| A08 (attributes) | tp2a-reader | get-item | 002 | allowed | SUCCESS | rc=0, SUCCESS | PASS | [Journal](../preuves/A08.txt) |
+| A09 (attributes) | tp2a-reader | get-item | 001 | internal_note | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/A09.txt) |
+| A10 (attributes) | tp2a-reader | update-item | 001 | absente | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/A10.txt) |
+| A11 (attributes) | tp2a-reader | delete-item | 001 | absente | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/A11.txt) |
+| B01 (leadingkeys) | tp2a-reader | get-item | 001 | allowed | SUCCESS | rc=0, SUCCESS | PASS | [Journal](../preuves/B01.txt) |
+| B02 (leadingkeys) | tp2a-reader | get-item | 002 | allowed | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B02.txt) |
+| B03 (leadingkeys) | tp2a-reader | get-item | 001 | ssn | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B03.txt) |
+| B04 (leadingkeys) | tp2a-reader | get-item | 001 | absente | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B04.txt) |
+| B05 (leadingkeys) | tp2a-reader | query | 001 | allowed | SUCCESS | rc=0, SUCCESS | PASS | [Journal](../preuves/B05.txt) |
+| B06 (leadingkeys) | tp2a-reader | query | 002 | allowed | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B06.txt) |
+| B07 (leadingkeys) | tp2a-reader | scan | — | allowed | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B07.txt) |
+| B08 (leadingkeys) | tp2a-reader | put-item | 999 | absente | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B08.txt) |
+| B09 (leadingkeys) | tp2a-reader | get-item | 001 | internal_note | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B09.txt) |
+| B10 (leadingkeys) | tp2a-reader | update-item | 001 | absente | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B10.txt) |
+| B11 (leadingkeys) | tp2a-reader | delete-item | 001 | absente | AccessDenied | rc=254, AccessDeniedException | EXPECTED DENY | [Journal](../preuves/B11.txt) |
 
 A01–A07 et B01–B08 reprennent les scénarios de votre demande. A08–A11 et B09–B11 sont des contrôles complémentaires (002, internal_note, UpdateItem, DeleteItem). Les écritures Update/Delete portent une condition fausse pour éviter une altération si les droits sont trop larges ; une erreur ConditionalCheckFailedException est FAIL.
 

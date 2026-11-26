@@ -1,0 +1,15 @@
+Date UTC : 2026-11-26T10:14:53.963641+00:00
+Étape : A07
+Profil : tp2a-reader
+Action : put-item
+Clé : 999
+Projection : None
+Attendu : AccessDenied
+Observé : rc=254, AccessDeniedException
+Statut : EXPECTED DENY
+
+stdout AWS réel :
+
+stderr AWS réel :
+
+aws: [ERROR]: An error occurred (AccessDeniedException) when calling the PutItem operation: User: arn:aws:iam::[COMPTE_MASQUÉ]:user/tp2a-dynamo-reader is not authorized to perform: dynamodb:PutItem on resource: arn:aws:dynamodb:eu-north-1:[COMPTE_MASQUÉ]:table/NovaUsersTP2A because no identity-based policy allows the dynamodb:PutItem action

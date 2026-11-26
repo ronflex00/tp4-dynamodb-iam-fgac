@@ -1,0 +1,68 @@
+[
+  {
+    "id": "B01",
+    "observed": "rc=0, SUCCESS",
+    "status": "PASS",
+    "proof": "B01.txt"
+  },
+  {
+    "id": "B02",
+    "observed": "rc=254, AccessDeniedException",
+    "status": "EXPECTED DENY",
+    "proof": "B02.txt"
+  },
+  {
+    "id": "B03",
+    "observed": "rc=254, AccessDeniedException",
+    "status": "EXPECTED DENY",
+    "proof": "B03.txt"
+  },
+  {
+    "id": "B04",
+    "observed": "rc=254, AccessDeniedException",
+    "status": "EXPECTED DENY",
+    "proof": "B04.txt"
+  },
+  {
+    "id": "B05",
+    "observed": "rc=0, SUCCESS",
+    "status": "PASS",
+    "proof": "B05.txt"
+  },
+  {
+    "id": "B06",
+    "observed": "rc=254, AccessDeniedException",
+    "status": "EXPECTED DENY",
+    "proof": "B06.txt"
+  },
+  {
+    "id": "B07",
+    "observed": "rc=254, AccessDeniedException",
+    "status": "EXPECTED DENY",
+    "proof": "B07.txt"
+  },
+  {
+    "id": "B08",
+    "observed": "rc=254, AccessDeniedException",
+    "status": "EXPECTED DENY",
+    "proof": "B08.txt"
+  },
+  {
+    "id": "B09",
+    "observed": "rc=254, AccessDeniedException",
+    "status": "EXPECTED DENY",
+    "proof": "B09.txt"
+  },
+  {
+    "id": "B10",
+    "observed": "rc=254, AccessDeniedException",
+    "status": "EXPECTED DENY",
+    "proof": "B10.txt"
+  },
+  {
+    "id": "B11",
+    "observed": "rc=254, AccessDeniedException",
+    "status": "EXPECTED DENY",
+    "proof": "B11.txt"
+  }
+]

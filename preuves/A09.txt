@@ -1,0 +1,15 @@
+Date UTC : 2026-11-26T10:14:56.196105+00:00
+Étape : A09
+Profil : tp2a-reader
+Action : get-item
+Clé : 001
+Projection : internal_note
+Attendu : AccessDenied
+Observé : rc=254, AccessDeniedException
+Statut : EXPECTED DENY
+
+stdout AWS réel :
+
+stderr AWS réel :
+
+aws: [ERROR]: An error occurred (AccessDeniedException) when calling the GetItem operation: User: arn:aws:iam::[COMPTE_MASQUÉ]:user/tp2a-dynamo-reader is not authorized to perform: dynamodb:GetItem on resource: arn:aws:dynamodb:eu-north-1:[COMPTE_MASQUÉ]:table/NovaUsersTP2A because no identity-based policy allows the dynamodb:GetItem action

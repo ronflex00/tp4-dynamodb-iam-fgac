@@ -1,88 +1,103 @@
 # TP4 — Limiter les données DynamoDB avec IAM FGAC
 
-Module : Gouvernance des identités et des habilitations. Entreprise du cas : Nova Services. Formateur indiqué : Mohammad Jabbari. Préparation : 26 novembre 2026, Europe/Paris.
+Nova Services · Gouvernance des identités et des habilitations · Formateur : Mohammad Jabbari · Exécution : 26 novembre 2026, Europe/Paris.
 
-**État : PARTIAL — clé technique manuelle en attente.** Le PDF de dix pages a été lu. La table créée par l'utilisateur est maintenant vérifiée ACTIVE en eu-north-1 ; les deux items fictifs ont été insérés puis contrôlés et le lecteur sans permission a été créé. Deux captures réelles sont conservées. Les tests reader n'ont pas commencé. Le contrôle de métadonnées GetLoginProfile reste PARTIAL à cause d'un Deny explicite dans une SCP, sans contournement de cette restriction.
+**READY_FOR_CLEANUP.** Les 23 scénarios DynamoDB ont été exécutés : six PASS et dix-sept EXPECTED DENY, sans FAIL ni test reader requis non exécuté. Douze captures réelles et les journaux expurgés sont conservés. La table, les données, le lecteur, sa clé et sa policy restent présents. Aucun nettoyage ni push effectué. GetLoginProfile demeure un contrôle administrateur PARTIAL à cause d'une SCP ; cette limite n'est pas assimilée à un succès FGAC.
 
 ## 1. Contexte
 
-Le support doit consulter des données utiles à l'assistance tout en excluant les attributs confidentiels. Le TP3 est annoncé terminé et nettoyé par l'utilisateur ; aucune ressource TP3 n'a été modifiée. Le [sujet officiel et sa provenance](docs/sources/README.md) distinguent les exigences du professeur des compléments et autorisations utilisateur.
+Le support Nova Services doit consulter un annuaire en protégeant les informations internes. Le PDF officiel de dix pages a été lu intégralement et rapproché des préparatifs : noms, items, première policy et huit questions. [Provenance et conformité](docs/sources/README.md). Aucune ressource TP3 n'a été modifiée.
+
+Le PDF prescrit la création en console. La table a été créée par l'utilisateur dans cette console ; celui-ci a ensuite expressément autorisé l'insertion des items et les opérations IAM automatiques par CLI. Ces variantes sont documentées. La clé reader a été créée et configurée manuellement, sans transmission de secret dans la conversation.
 
 ## 2. Objectif FGAC
 
-Étape A : lecture des seuls `id`, `username`, `email` sur 001 et 002. Étape B : ces mêmes attributs sur le seul dossier 001. Les lectures de `ssn`, `internal_note`, lectures complètes et écritures doivent être refusées. État observé : NOT TESTED pour ces objectifs.
+Étape A : lecture des seuls id, username et email sur 001 et 002. Étape B : mêmes attributs sur le seul dossier 001. Les résultats réels établissent le refus de ssn, internal_note, des lectures sans projection et des écritures. La restriction finale retire aussi Scan et refuse GetItem/Query sur 002.
 
 ## 3. Architecture
 
-Une identité technique reçoit une seule inline policy, contrôlée à chaque transition ; la table n'accepte aucune permission parallèle. [Diagramme et décisions](docs/architecture.md). Cette architecture est préparée et n'est pas encore déployée.
+L'utilisateur technique tp2a-dynamo-reader reçoit une seule inline policy TP2AFGAC sur l'ARN exact de NovaUsersTP2A. L'état final ajoute LeadingKeys 001 aux conditions sur les attributs. [Diagramme et décisions](docs/architecture.md). Aucun groupe, managed policy, autre inline policy ou resource policy de table n'élargit les droits observés.
 
 ## 4. Environnement AWS
 
-Arch Linux ; AWS CLI 2.37.9 ; Python 3.14.10 ; Git 2.56.1 ; Fish disponible. Dossier : `/home/gatta/Downloads/TP4`.
+Arch Linux, Fish ; AWS CLI 2.37.9, Python 3.14.10, Git 2.56.1. Workspace : /home/gatta/Downloads/TP4. Les chemins de profils et cache sont isolés dans .secrets/. AWS_PAGER est vide, conformément à la syntaxe de cette variable.
 
-Paramètres confirmés par l'utilisateur à partir du TP3 : projet Blank Canvas, AWS Free plan, région eu-north-1, MFA Builder ID TOTP actif, même compte que TP3. Le plan et le MFA n'ont pas été relus dans une console pendant cette session. STS ne permet pas de vérifier ces éléments ni de prouver la correspondance historique avec TP3.
+Paramètres déclarés par l'utilisateur : projet Blank Canvas, AWS Free plan, région eu-north-1, MFA Builder ID TOTP actif, compte du cours conservé. STS vérifie le compte et les identités, pas le plan, les crédits, le MFA IAM ou la correspondance historique avec TP3. Aucun changement de plan effectué.
 
-La première tentative STS isolée a réellement échoué avec rc=253 (NoCredentials). `aws login --profile tp2a-admin` a ensuite terminé avec rc=0. La nouvelle vérification STS a réussi et le principal est autre que root. Les profils et caches restent dans `.secrets/`, les identifiants sont expurgés des preuves. Aucune clé admin permanente créée. Voir [preuve de l'environnement](preuves/environment.txt).
+La connexion admin est temporaire par aws login ; aucune clé admin créée. L'environnement a été sourcé dans Fish pour la reprise. GetCallerIdentity admin et reader réussissent (rc=0), avec compte/principal admin conformes au manifest et ARN reader exactement égal à celui de tp2a-dynamo-reader. [Preuve expurgée](preuves/reader-identity.txt). Aucune identité root utilisée.
 
 ## 5. Table DynamoDB
 
-Nom visé : NovaUsersTP2A ; clé `id` String, aucune sort key, Standard, On-demand, aucun index, Stream, réplication ou sauvegarde supplémentaire. Création en console prévue conformément à la demande. Deux items fictifs exacts décrits dans le [README](README.md).
+NovaUsersTP2A est ACTIVE : id String, aucune sort key, Standard, On-demand. Aucun index, Stream, réplication, PITR, sauvegarde supplémentaire ou resource policy. La date de création est postérieure au préflight d'absence ; le tag d'appartenance a été ajouté seulement à cette table, et son TableId conservé. [Appartenance](preuves/table-ownership.txt), [capture ACTIVE](preuves/01-table-created.png).
 
-Observation préalable : DescribeTable a renvoyé ResourceNotFoundException, rc=254 ; la table était absente lors de la préparation. Le préflight a renouvelé ce constat après lecture du PDF et conservé l'appartenance dans le manifest privé. Voir [preuve du préflight](preuves/preflight.txt).
+Le premier diagnostic d'absence était réel : l'utilisateur a ensuite précisé que la table n'avait jamais été créée à ce moment. Il l'a réellement créée avant la reprise réussie. Ce diagnostic historique est conservé, sans le présenter comme un refus IAM.
 
-Lors de la première reprise, DescribeTable répondait ResourceNotFoundException et ListTables était vide : [diagnostic historique](preuves/table-recheck.txt). L'utilisateur a ensuite identifié la cause : la table n'avait pas encore été créée. Après sa création réelle en console, DescribeTable a répondu rc=0 et ACTIVE. L'ARN correspond au compte du manifest et la date de création est postérieure au constat d'absence. Le tag TP4LabId a été ajouté seulement après ces vérifications ; TableId est enregistré. Standard, On-demand, id String, absence d'index, Stream, réplication, PITR, sauvegarde supplémentaire et resource policy ont été contrôlés. Voir [appartenance](preuves/table-ownership.txt) et [capture ACTIVE](preuves/01-table-created.png).
+Les items fictifs ont été insérés par PutItem conditionnel sans écrasement, puis vérifiés par Scan administrateur et deux GetItem consistent-read :
 
-L'insertion CLI automatique a été expressément autorisée par l'utilisateur, en variante de la création console du PDF. PutItem conditionnel n'a pas écrasé de données. Scan administrateur puis GetItem consistent-read 001/002 confirment exactement deux items et les cinq valeurs String attendues. Voir [journal](preuves/items.txt) et [capture réelle des deux lectures](preuves/02-items.png).
+| id String | username | email | ssn | internal_note |
+| --- | --- | --- | --- | --- |
+| 001 | alice | alice@example.com | FICTIF-001 | Demonstration interne |
+| 002 | bob | bob@example.com | FICTIF-002 | Demonstration interne |
+
+Tous les attributs sont String et les zéros initiaux sont conservés. Exactement deux items, valeurs conformes ; l'item 999 est absent. [Journal administrateur](preuves/items.txt), [capture des deux lectures](preuves/02-items.png).
 
 ## 6. Identité IAM
 
-`tp2a-dynamo-reader` a été créé par CreateUser après un nouveau constat NoSuchEntity. Son UserId et son tag sont conformes au manifest. Les listes de groupes, policies inline et managed policies sont vides (rc=0), sans permissions boundary. ListAccessKeys retournait zéro clé avant l'intervention humaine. Aucune policy de lecture n'est encore posée. Voir [preuve de création et audit](preuves/reader-created.txt).
+CreateUser a créé tp2a-dynamo-reader sans groupe, permission ou mot de passe. UserId et tag sont conformes au manifest. Les listes initiales de groupes et policies étaient vides ; zéro clé était présent avant l'intervention de l'utilisateur. [Preuve de création](preuves/reader-created.txt).
 
-Aucun login console ni mot de passe n'a été créé par nos commandes. En revanche, le rôle admin rencontre un **Deny explicite dans une SCP sur iam:GetLoginProfile**, rc=254. L'absence de profil console ne peut donc pas être confirmée par cette API : contrôle PARTIAL, [réponse expurgée](preuves/audit-login-profile.txt). Cette restriction n'a pas été changée et aucun droit supplémentaire n'a été accordé. Elle concerne l'audit administrateur, pas le refus implicite DynamoDB du reader.
-
-Le profil local tp2a-reader est préparé avec région eu-north-1 et sortie JSON ; les fichiers de profil ont les permissions 600. La création de l'unique clé et sa saisie restent exclusivement humaines dans la console puis le terminal personnel. [Procédure prête à exécuter](docs/configuration-reader.md).
+Après configuration manuelle : une seule clé active et une identité STS exacte sont vérifiées. Aucune nouvelle clé créée par l'agent. Aucun login console créé par nos opérations. GetLoginProfile est refusé au rôle admin par un Deny explicite dans une SCP (rc=254) : son contrôle d'absence reste PARTIAL. [Preuve](preuves/audit-login-profile.txt). Aucune SCP ni permission n'a été modifiée pour contourner cette limite.
 
 ## 7. Refus initial
 
-Protocole I01 : GetItem 001 avec projection approuvée, profil reader sans permission. Attendu : AccessDenied. Observé : NOT TESTED, car la configuration de la clé reader n'est pas encore confirmée. L'utilisateur existe désormais sans permission. Un GetCallerIdentity réussi ne permet pas de conclure sur les permissions DynamoDB ; le refus GetLoginProfile de l'administrateur ne valide pas non plus ce scénario.
+I01 : GetItem 001 avec projection id, username, email, avant toute inline policy. Résultat réel : AccessDeniedException, rc=254, EXPECTED DENY. [Journal](preuves/I01.txt), [capture](preuves/03-reader-no-permission.png). La réussite STS prouve l'authentification mais n'accorde aucun droit DynamoDB.
 
 ## 8. Policy Attributes
 
-[Modèle JSON](policies/fgac-attributes.json) comparé aux pages 5–6 du PDF : GetItem, Query, Scan, attributs `id`, `username`, `email`, Select spécifique lorsque présent et contrôle Null conformes. Le Sid a été aligné sur ReadPublicAttributes. Les deux JSON privés `.secrets/policies/` ont été générés avec l'ARN du compte vérifié, puis validés localement. Le modèle versionné reste anonymisé et non déployable. Installation non effectuée.
+Le [modèle Attributes](policies/fgac-attributes.json) reproduit les pages 5–6 du PDF : GetItem, Query, Scan ; liste d'attributs id, username, email ; Select SPECIFIC_ATTRIBUTES lorsque présent et Null sur Attributes. Le Sid est ReadPublicAttributes.
+
+L'ARN exact, obtenu du compte STS et de la région vérifiés, est conservé dans le JSON privé .secrets/policies/. Le modèle versionné anonymise le numéro de compte. PutUserPolicy puis GetUserPolicy ont confirmé le document exact sous TP2AFGAC ; la propagation a été attendue avant tests. [Preuve d'application](preuves/policy-attributes.txt).
 
 ## 9. Projection autorisée
 
-A01 et A08 doivent retourner respectivement les trois attributs approuvés de 001 et 002, avec les valeurs fictives exactes. Le script contrôle la réponse, pas seulement rc=0. Observé : NOT TESTED. Les scripts passent ProjectionExpression à DynamoDB ; aucun filtre CLI --query n'est utilisé pour protéger les données.
+A01 (001) et A08 (002) : PASS, rc=0, avec exactement id, username, email et leurs valeurs fictives attendues. Les champs sensibles sont absents des réponses. [Capture A01](preuves/04-projection-allowed.png). Les tests comparent les données retournées ; aucun filtre CLI --query n'est utilisé pour protéger les données.
 
 ## 10. Attribut sensible interdit
 
-A02/B03 demandent id et ssn ; A09/B09 demandent id et internal_note. Le refus attendu porte sur toute la requête. Observé : NOT TESTED. Le PDF prévoit de protéger les notes internes, mais ne détaille pas ce test supplémentaire ; A09/B09 sont identifiés comme contrôles complémentaires.
+A02/B03 demandent id et ssn ; A09/B09 demandent id et internal_note. Quatre requêtes entièrement refusées par AccessDeniedException, rc=254, EXPECTED DENY. [Capture ssn](preuves/05-ssn-denied.png). Le test explicite internal_note est un complément au protocole détaillé du PDF, cohérent avec son objectif de confidentialité.
 
 ## 11. Lecture sans projection refusée
 
-A03/B04 omettent ProjectionExpression. L'objectif est un véritable AccessDenied, pas une sortie CLI masquée. Observé : NOT TESTED. Les erreurs de connexion, jeton expiré ou validation de paramètres produisent FAIL et jamais EXPECTED DENY.
+A03/B04 omettent ProjectionExpression. Les deux lectures sont refusées par AccessDeniedException, rc=254, EXPECTED DENY. [Capture A03](preuves/06-no-projection-denied.png). Les erreurs techniques, credentials expirés ou paramètres invalides n'auraient pas été comptés comme refus IAM attendu.
 
 ## 12. Query / Scan
 
-A04 : Query 001 projeté, succès attendu. A05 : Scan projeté, exactement deux items attendus. A06 : Scan ALL_ATTRIBUTES, refus attendu. B05 : Query 001 autorisé ; B06 : Query 002 refusé ; B07 : Scan projeté refusé. Tous : NOT TESTED.
+A04 : Query 001 PASS, rc=0, un seul item avec les trois attributs approuvés. A05 : Scan projeté PASS, rc=0, exactement deux items. A06 : Scan ALL_ATTRIBUTES EXPECTED DENY, rc=254. [Capture Query](preuves/07-query-allowed.png), [capture Scan à deux items](preuves/08-scan-two-items.png).
+
+Après restriction : B05 Query 001 PASS ; B06 Query 002 et B07 Scan projeté EXPECTED DENY, rc=254. [Capture Scan final](preuves/12-scan-denied.png).
 
 ## 13. Refus d'écriture
 
-A07/B08 tentent PutItem 999, sans écraser un item existant grâce à une condition. En cas de succès inattendu : FAIL, vérification admin de l'item fictif précis, suppression ciblée du seul 999, vérification de son absence puis arrêt. Le script n'efface aucune table dans cette remédiation.
+A07/B08 PutItem 999 : AccessDeniedException, rc=254, EXPECTED DENY. Aucun item 999 créé ; aucune remédiation de suppression nécessaire. [Capture PutItem](preuves/09-write-denied.png).
 
-UpdateItem et DeleteItem sont aussi testés avec une condition fausse sur l'item existant pour éviter de l'altérer si une permission excessive existe. ConditionalCheckFailedException reste FAIL : seule une erreur AccessDenied de l'opération correspondante établit le refus attendu. Observé : NOT TESTED pour toutes les écritures.
+A10/B10 UpdateItem et A11/B11 DeleteItem : même refus réel. Ces commandes portaient une condition fausse pour préserver les fixtures en cas de permission excessive. Elles ont été refusées par IAM ; ConditionalCheckFailedException n'aurait pas été validé. Les deux items ont été revérifiés intacts après les suites.
 
 ## 14. Policy LeadingKeys
 
-[Modèle complémentaire](policies/fgac-leadingkeys.json) : GetItem/Query seulement, attributs approuvés, LeadingKeys exactement `001`, contrôle de présence pour les deux clés de condition. Scan retiré. L'objectif 001 et les deux livrables JSON figurent dans le PDF ; le second JSON n'y est pas fourni. Cette construction détaillée suit la [documentation AWS FGAC](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/specifying-conditions.html). Aucune policy attachée.
+Le [modèle LeadingKeys](policies/fgac-leadingkeys.json) conserve les attributs approuvés et Select, ajoute ForAllValues:StringEquals sur LeadingKeys 001 et Null sur Attributes/LeadingKeys. GetItem et Query sont les seules actions autorisées ; aucun Scan ni écriture.
+
+Le PDF exige la restriction 001 et deux livrables JSON, sans donner le second document détaillé. Cette construction complémentaire suit la [documentation AWS FGAC](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/specifying-conditions.html). Le même nom inline TP2AFGAC a été remplacé, puis relu ; aucun Allow plus large conservé. [Preuve de transition](preuves/policy-leadingkeys.txt).
 
 ## 15. Restriction au dossier 001
 
-La policy B remplacera la policy inline A sous le même nom TP2AFGAC. L'audit vérifie l'absence d'autres inline/managed policies, groupes et resource policy de table. GetLoginProfile conserve un statut PARTIAL documenté si la SCP observée le refuse ; les autres erreurs d'audit arrêtent le script. Les tests B01/B05 doivent réussir ; B02/B06 doivent refuser 002. Attendre la propagation IAM avant les retests. Observé : NOT TESTED.
+Après propagation, B01 GetItem 001 et B05 Query 001 : PASS, rc=0, données exactes et projetées. B02 GetItem 002 et B06 Query 002 : EXPECTED DENY, rc=254. [001 autorisé](preuves/10-leadingkeys-001.png), [002 refusé](preuves/11-leadingkeys-002-denied.png).
+
+Les attributs sensibles et lectures sans projection restent refusés ; B07 Scan est refusé. La policy finale relue correspond au JSON LeadingKeys privé sur l'ARN exact. Aucun groupe, managed policy, autre inline ou resource policy n'ajoute d'accès.
 
 ## 16. Matrice
 
-[Matrice complète](docs/tests.md) avec attendu, observé, statut et preuve. Les contrôles administrateur D01–D04 ont des observations conformes ; D05 GetLoginProfile reste PARTIAL. Tous les scénarios reader sont NOT TESTED. Les suites les rempliront uniquement après les appels réels. Les résultats des tests unitaires locaux ne remplissent pas cette matrice.
+[Les 23 scénarios et les contrôles administrateur](docs/tests.md) indiquent identité, action, clé, projection, attendu, observé, statut et preuve. Résultat reader : six PASS et dix-sept EXPECTED DENY, aucun FAIL/PARTIAL/NOT TESTED parmi les scénarios requis. Les succès sont rc=0 avec contenu exact ; les refus sont AccessDeniedException, rc=254, sur l'opération testée.
+
+D05 GetLoginProfile reste séparément PARTIAL, documenté comme restriction de lecture administrateur. Les dix-huit tests unitaires locaux ne sont pas présentés comme des tests AWS. Douze captures réelles sont revues ; les réponses originales expurgées et leur date restent disponibles.
 
 ## 17. Analyse gouvernance
 
@@ -90,23 +105,25 @@ La policy B remplacera la policy inline A sous le même nom TP2AFGAC. L'audit v�
 | --- | --- |
 | Demandeur métier nominatif | À VALIDER |
 | Propriétaire des données | À VALIDER |
-| Justification proposée | Assistance utilisateur : identifier le dossier et contacter l'usager fictif |
+| Justification proposée | Assistance : identifier le dossier et contacter l'usager fictif |
 | Attributs proposés à l'approbation | id, username, email ; approbation formelle À VALIDER |
 | Attributs exclus | ssn, internal_note |
-| Périmètre proposé après restriction | Dossier 001 ; approbation métier À VALIDER |
+| Périmètre technique final | Dossier 001 ; approbation métier À VALIDER |
 | Date de revue des habilitations | À VALIDER |
-| Date de préparation technique | 26 novembre 2026 ; ne vaut pas date de revue métier |
-| Moindre privilège | Lecture seule, attributs limités, partition 001 en B, aucun Scan en B |
-| Identité de production proposée | Rôle avec credentials temporaires ; décision À VALIDER |
+| Date d'exécution technique | 26 novembre 2026 ; ne vaut pas date de revue métier |
+| Moindre privilège observé | Lecture projetée sur 001, aucun Scan final, aucune écriture |
+| Identité de production proposée | Rôle et credentials temporaires ; décision À VALIDER |
 
-Aucune validation formelle, personne responsable ou date de revue n'a été inventée. [Réponses aux huit questions](docs/questions.md).
+Aucune personne responsable, validation formelle ou date de revue inventée. [Réponses aux huit questions du PDF](docs/questions.md).
 
 ## 18. Nettoyage
 
-**NON LANCÉ — autorisation CLEANUP non reçue.** Le [protocole](docs/cleanup.md) est préparé. La table avec ses deux items et l'utilisateur lecteur sont conservés dans AWS. Le compte, Builder ID, MFA et ressources extérieures sont préservés. Aucun logout ou retrait de secrets n'est exécuté pendant cette attente de configuration.
+**NON LANCÉ.** cleanup-check, qui ne supprime rien, a terminé rc=0 et READY_FOR_CLEANUP. [Preuve de contrôle](preuves/pre-cleanup-check.txt), [rapport complet](docs/rapport-pre-cleanup.md). Ce statut conserve la limite d'audit SCP mentionnée plus haut.
+
+La table, les deux items, l'utilisateur, l'unique clé active, l'inline LeadingKeys et les profils/sessions restent présents. Ni désactivation de clé, ni suppression de policy/table/user, ni logout, ni retrait du dossier .secrets n'ont été exécutés. Aucune capture 13-cleanup.png n'existe. Attendre l'instruction explicite CLEANUP avant le [protocole final](docs/cleanup.md). Builder ID, MFA et ressources extérieures préservés.
 
 ## 19. Conclusion
 
-Le PDF et les huit questions sont vérifiés. La table ACTIVE, les items 001/002 exacts et le lecteur sans permission sont désormais observés dans AWS. Les policies privées avec ARN exact sont prêtes ; les tests reader attendent l'unique clé manuelle. Deux captures réelles et les journaux sont conservés. La limite SCP sur GetLoginProfile est explicitement PARTIAL et n'a pas été contournée. Aucun test FGAC reader n'est déclaré réussi ; aucun nettoyage ni publication effectué. Statut du TP : **PARTIAL**.
+Les résultats réels établissent la restriction des attributs, puis de la partition 001. Les vingt-trois tests reader sont conformes et documentés ; douze captures et les journaux expurgés sont conservés. La seule limite technique d'audit connue est GetLoginProfile refusé par SCP, sans contournement. Statut : **READY_FOR_CLEANUP**, avec ressources conservées et absence de publication GitHub.
 
-Validation locale : modèles et JSON privés validés ; dix-huit tests unitaires réussis, dont trois contrôles du traitement explicite de l'audit SCP partiel. Syntaxe Bash/Fish, Markdown et secrets sont contrôlés avant commit. Les fichiers de profil ont les permissions 600, les répertoires privés 700. Voir le [journal de validation locale](preuves/local-validation.txt). Les commits restent locaux.
+Validation locale : dix-huit tests unitaires réussis ; JSON/ARN, Markdown, liens et syntaxe Bash/Fish contrôlés. L'audit vérifie les exclusions Git, les motifs sensibles et compare en mémoire les credentials locaux aux fichiers suivables sans affichage de valeurs. Les captures ont été revues visuellement. [Journal de validation](preuves/local-validation.txt). Commit local des modifications validées, sans push.

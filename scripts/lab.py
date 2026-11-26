@@ -368,7 +368,7 @@ def matrix():
 def proof(name, content):
     PROOFS.mkdir(exist_ok=True)
     path = PROOFS / name
-    path.write_text(redact(content))
+    path.write_text(redact(content).rstrip() + "\n")
     path.chmod(0o644)
 
 

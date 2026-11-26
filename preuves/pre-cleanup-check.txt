@@ -1,0 +1,6 @@
+2026-11-26T10:18:23.140967+00:00 cleanup-check exécuté sans suppression, code réel 0.
+Compte, principal et région conformes au manifest ; table ACTIVE, TableId et UserId exacts, marqueurs vérifiés.
+Deux items exacts ; une seule clé active ; aucun groupe ou managed policy ; seule inline TP2AFGAC conforme à LeadingKeys.
+23 scénarios reader observés conformes : 6 PASS, 17 EXPECTED DENY.
+READY_FOR_CLEANUP, avec limite documentée PARTIAL sur GetLoginProfile (SCP).
+Aucune ressource supprimée, aucune clé désactivée, aucun logout.

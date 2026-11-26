@@ -1,40 +1,32 @@
 # TP4 EXECUTION REPORT
 
-État au 26 novembre 2026. Les observations CLI proviennent du profil isolé tp2a-admin, dont le compte et le principal sont conformes au manifest et distincts de root. La région est eu-north-1.
+Exécution terminée jusqu'à l'arrêt demandé avant nettoyage. Voir le [rapport pré-nettoyage complet](rapport-pre-cleanup.md) et la [matrice détaillée](tests.md).
 
-| Contrôle | État observé |
+| Contrôle | Résultat observé |
 | --- | --- |
-| Table DynamoDB | ACTIVE, DescribeTable rc=0 ; id String, Standard, On-demand, options conformes et appartenance enregistrée |
-| Items 001/002 | Créés par CLI autorisée, sans écrasement ; Scan admin et GetItem 001/002 confirment exactement les valeurs fictives |
-| Utilisateur IAM | tp2a-dynamo-reader créé ; aucun groupe, policy inline/managed, permissions boundary ou clé au contrôle initial |
-| Profil reader | Région eu-north-1 et sortie JSON préparées ; saisie manuelle de la clé et confirmation attendues |
-| Refus initial | NOT TESTED |
-| Projection autorisée | NOT TESTED |
-| Attribut sensible refusé | NOT TESTED |
-| Lecture complète refusée | NOT TESTED |
-| Query | NOT TESTED |
-| Scan initial | NOT TESTED |
-| PutItem refusé | NOT TESTED |
-| LeadingKeys 001 | NOT TESTED |
-| Accès 002 refusé | NOT TESTED |
-| Scan final refusé | NOT TESTED |
-| Captures | 01-table-created.png et 02-items.png : captures réelles de réponses AWS dans des terminaux dédiés, revues visuellement |
-| Documentation | PDF lu, provenance et conformité documentées ; README, huit réponses et compte-rendu actualisés |
-| Tests locaux | Dix-huit tests hors ligne réussis ; modèles JSON et JSON privés avec ARN exact validés |
-| Git | Modifications conservées dans le dépôt local ; aucune publication |
-| Audit secrets | Fichiers privés exclus ; compte masqué dans les journaux ; audit local avant commit |
-| Ressources AWS restantes | Table NovaUsersTP2A, items 001/002 et utilisateur tp2a-dynamo-reader conservés ; aucune policy FGAC posée ni suppression exécutée |
+| Table DynamoDB | ACTIVE, conforme, eu-north-1 |
+| Items 001/002 | Exactement deux items fictifs, cinq String ; vérifiés administrateur |
+| Utilisateur IAM | tp2a-dynamo-reader ; aucune managed policy ni groupe ; seule inline TP2AFGAC |
+| Profil reader | STS identité exacte et compte conformes ; une seule clé active |
+| Refus initial | I01 EXPECTED DENY, AccessDeniedException, rc=254 |
+| Projection autorisée | A01/A08 et B01 PASS, rc=0 |
+| Attribut sensible refusé | ssn et internal_note refusés en A et B, rc=254 |
+| Lecture complète refusée | A03/B04 EXPECTED DENY, rc=254 |
+| Query | 001 autorisé en A et B ; 002 refusé en B |
+| Scan initial | A05 PASS, exactement deux items ; ALL_ATTRIBUTES refusé en A06 |
+| PutItem refusé | A07/B08 EXPECTED DENY, rc=254 ; Update/Delete également refusés |
+| LeadingKeys 001 | B01/B05 PASS ; seuls les trois attributs approuvés |
+| Accès 002 refusé | B02/B06 EXPECTED DENY, rc=254 |
+| Scan final refusé | B07 EXPECTED DENY, rc=254 |
+| Captures | Douze captures réelles revues ; aucun écran de clé ni capture de nettoyage |
+| Documentation | Compte-rendu, huit réponses, matrice et provenance finalisés |
+| Tests locaux | Dix-huit réussis ; validation JSON/ARN, Markdown et Bash/Fish |
+| Git | Commit local des modifications validées ; aucune publication |
+| Audit secrets | Fichiers privés exclus ; comparaison locale sans affichage et revue des images |
+| Ressources AWS restantes | Table, deux items, lecteur, une clé active et inline LeadingKeys ; sessions et profils locaux conservés |
 
-**FINAL STATUS : PARTIAL**
+**Anomalie connue :** GetLoginProfile reste PARTIAL, car une SCP refuse cette lecture au rôle admin. Aucune SCP ni permission n'a été élargie. Les 23 scénarios DynamoDB sont conformes : six PASS et dix-sept EXPECTED DENY. Les responsables métier et la date de revue restent À VALIDER.
 
-## Limite d'audit observée
+**FINAL STATUS : READY_FOR_CLEANUP**
 
-GetLoginProfile, exécuté avec tp2a-admin, répond AccessDenied (rc=254) avec un **Deny explicite dans une SCP** sur iam:GetLoginProfile. Aucun login console n'a été créé par nos commandes ; son absence n'a pas pu être confirmée par cette API. Le contrôle D05 reste PARTIAL. Aucune SCP, permission ou offre AWS n'a été modifiée. Ce résultat ne valide ni le refus initial DynamoDB ni les droits FGAC du reader. Les autres lectures IAM ont réussi et constaté les listes vides.
-
-## Intervention humaine actuelle
-
-Créer l'unique clé technique dans IAM et la saisir uniquement dans le terminal personnel, selon [la procédure](configuration-reader.md). Aucun secret ni sortie STS n'est demandé dans la conversation. Confirmer seulement « profil reader configuré ». L'agent vérifiera alors l'identité et lancera le refus initial avant toute policy, puis les suites Attributes et LeadingKeys en remplaçant la même inline policy.
-
-Le blocage précédent est résolu : l'utilisateur a indiqué que la table n'avait pas encore été créée lors du [diagnostic historique](../preuves/table-recheck.txt), puis l'a réellement créée. Elle est maintenant retrouvée ACTIVE dans le compte et la région du manifest.
-
-Preuves : [table](../preuves/01-table-created.png), [items](../preuves/02-items.png), [création lecteur](../preuves/reader-created.txt), [audit IAM](../preuves/reader-audit.txt), [limite SCP](../preuves/audit-login-profile.txt). Voir aussi [matrice](tests.md) et [conformité au PDF](sources/README.md). Aucun nettoyage n'est autorisé.
+Aucun nettoyage exécuté. Attendre une instruction explicite CLEANUP avant toute suppression. Aucun push GitHub.

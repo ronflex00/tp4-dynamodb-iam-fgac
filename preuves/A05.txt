@@ -1,0 +1,42 @@
+Date UTC : 2026-11-26T10:14:51.477536+00:00
+Étape : A05
+Profil : tp2a-reader
+Action : scan
+Clé : None
+Projection : allowed
+Attendu : SUCCESS
+Observé : rc=0, SUCCESS
+Statut : PASS
+
+stdout AWS réel :
+{
+    "Items": [
+        {
+            "email": {
+                "S": "alice@example.com"
+            },
+            "id": {
+                "S": "001"
+            },
+            "username": {
+                "S": "alice"
+            }
+        },
+        {
+            "email": {
+                "S": "bob@example.com"
+            },
+            "id": {
+                "S": "002"
+            },
+            "username": {
+                "S": "bob"
+            }
+        }
+    ],
+    "Count": 2,
+    "ScannedCount": 2,
+    "ConsumedCapacity": null
+}
+
+stderr AWS réel :

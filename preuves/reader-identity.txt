@@ -1,0 +1,6 @@
+2026-11-26T10:13:49.324801+00:00 Environnement chargé par source scripts/use-lab-env.fish dans Fish.
+GetCallerIdentity tp2a-admin et tp2a-reader : rc=0.
+Compte et principal admin conformes au manifest ; ARN reader égal à celui de tp2a-dynamo-reader.
+Aucun identifiant AWS ni credential publié.
+La suite I01 a revérifié la table ACTIVE, les deux items fictifs exacts et l’unique clé active, sans groupe ni policy initiale.
+I01 : GetItem projeté 001, AccessDeniedException, rc=254 ; EXPECTED DENY.

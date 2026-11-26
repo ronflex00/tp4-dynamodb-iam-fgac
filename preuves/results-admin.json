@@ -53,5 +53,27 @@
     "observed": "rc=254, AccessDenied explicite par SCP",
     "status": "PARTIAL",
     "proof": "audit-login-profile.txt"
+  },
+  {
+    "step": "D06",
+    "identity": "tp2a-reader",
+    "action": "GetCallerIdentity",
+    "key": "—",
+    "projection": "métadonnées",
+    "expected": "identité exacte du reader, même compte",
+    "observed": "rc=0, ARN exact et compte conformes",
+    "status": "PASS",
+    "proof": "reader-identity.txt"
+  },
+  {
+    "step": "D07",
+    "identity": "tp2a-admin",
+    "action": "Audit final policy, groupes et clé",
+    "key": "—",
+    "projection": "métadonnées",
+    "expected": "seule TP2AFGAC LeadingKeys et une clé active",
+    "observed": "rc=0, inline exacte ; aucun groupe/managed policy ; une clé active",
+    "status": "PASS",
+    "proof": "pre-cleanup-check.txt"
   }
 ]

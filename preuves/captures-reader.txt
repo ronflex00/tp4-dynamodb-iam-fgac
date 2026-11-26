@@ -1,0 +1,6 @@
+2026-11-26T10:19:09.020779+00:00 Captures 03 à 12 réellement prises avec foot et grim.
+Chaque terminal affiche le journal expurgé de l’appel AWS déjà exécuté, avec sa date, ses paramètres, son code de retour et sa réponse réelle.
+03 : I01 ; 04–09 : A01, A02, A03, A04, A05, A07 ; 10–12 : B01, B02, B07.
+Les captures 04–12 excluent une bande vide en haut de fenêtre pour éviter les notifications ; aucun texte du journal n’a été supprimé. Les prises gênées par une notification ont été refaites.
+Toutes les images ont été revues visuellement avant copie dans preuves/. Aucun identifiant de compte, secret, cookie, token ou écran de clé n’y est visible.
+13-cleanup.png n’existe pas : aucun nettoyage n’a été autorisé ou exécuté.

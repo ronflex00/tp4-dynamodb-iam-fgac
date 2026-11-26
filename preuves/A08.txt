@@ -1,0 +1,26 @@
+Date UTC : 2026-11-26T10:14:55.200118+00:00
+Étape : A08
+Profil : tp2a-reader
+Action : get-item
+Clé : 002
+Projection : allowed
+Attendu : SUCCESS
+Observé : rc=0, SUCCESS
+Statut : PASS
+
+stdout AWS réel :
+{
+    "Item": {
+        "email": {
+            "S": "bob@example.com"
+        },
+        "id": {
+            "S": "002"
+        },
+        "username": {
+            "S": "bob"
+        }
+    }
+}
+
+stderr AWS réel :

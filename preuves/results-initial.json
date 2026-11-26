@@ -1,0 +1,8 @@
+[
+  {
+    "id": "I01",
+    "observed": "rc=254, AccessDeniedException",
+    "status": "EXPECTED DENY",
+    "proof": "I01.txt"
+  }
+]

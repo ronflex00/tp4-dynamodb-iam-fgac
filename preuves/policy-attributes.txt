@@ -1,0 +1,4 @@
+2026-11-26T10:14:04.282389+00:00 PutUserPolicy rc=0 ; TP2AFGAC remplacée.
+GetUserPolicy conforme ; aucun groupe, managed policy, autre policy inline ou policy de ressource.
+Aucun accès console créé par nos opérations ; vérification GetLoginProfile : PARTIAL (SCP).
+ARN exact vérifié, masqué dans le dépôt.

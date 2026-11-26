@@ -68,3 +68,25 @@ CONTRÔLES LOCAUX OK — Markdown analysé, liens, JSON, Bash/Fish, exclusions e
 
 Commande : git diff --check
 Code réel : 0
+
+Validation avant arrêt pré-nettoyage — 2026-11-26T10:22:23.264776+00:00
+Tests unitaires exécutés lors de cette reprise : 18 réussis, rc=0 (hors ligne).
+Résultats AWS distincts : 23 scénarios reader, 6 PASS et 17 EXPECTED DENY ; aucune ligne reader FAIL ou NOT TESTED.
+Douze captures réelles revues visuellement ; aucune capture de nettoyage. Analyse syntaxique de tous les scripts Python réussie.
+
+Commande : python3 scripts/validate-policies.py --templates
+Code réel : 0
+VALIDATION LOCALE OK — modèles non déployables
+
+Commande : python3 scripts/validate-policies.py
+Code réel : 0
+VALIDATION LOCALE OK — ARN lié
+
+Commande : python3 scripts/validate-project.py
+Code réel : 0
+CONTRÔLES LOCAUX OK — Markdown analysé, liens, JSON, Bash/Fish, exclusions et 86 fichiers suivables audités. Les images exigent une revue visuelle. Aucun test AWS effectué par ce contrôle.
+
+Commande : git diff --check
+Code réel : 0
+
+Contrôle staged : lignes vides finales signalées dans les nouveaux journaux ; fins de fichier normalisées sans changement des résultats ni réponses AWS. Nouveau contrôle staged effectué avant commit.

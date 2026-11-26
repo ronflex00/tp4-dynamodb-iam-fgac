@@ -1,0 +1,15 @@
+Date UTC : 2026-11-26T10:16:45.759782+00:00
+Étape : B07
+Profil : tp2a-reader
+Action : scan
+Clé : None
+Projection : allowed
+Attendu : AccessDenied
+Observé : rc=254, AccessDeniedException
+Statut : EXPECTED DENY
+
+stdout AWS réel :
+
+stderr AWS réel :
+
+aws: [ERROR]: An error occurred (AccessDeniedException) when calling the Scan operation: User: arn:aws:iam::[COMPTE_MASQUÉ]:user/tp2a-dynamo-reader is not authorized to perform: dynamodb:Scan on resource: arn:aws:dynamodb:eu-north-1:[COMPTE_MASQUÉ]:table/NovaUsersTP2A because no identity-based policy allows the dynamodb:Scan action
